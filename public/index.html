@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discgolf Challenge</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #121212;
+      color: white;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center; /* vertikal centrering av kortet */
+      overflow: hidden;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 360px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 10px;
+      box-sizing: border-box;
+    }
+
+    /* Box för text och bild - grå */
+    .content-box {
+      width: 100%;
+      background: #2c2c2c;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center; /* centrerar innehåll vertikalt */
+      gap: 12px;
+      min-height: 200px;
+    }
+
+    .content-box h2 {
+      text-align: center;
+      margin: 0;
+      color: #f1f1f1;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .content-box img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      display: none;
+    }
+
+    /* Knappen längst ner */
+    .button-box {
+      position: fixed;
+      bottom: 20px;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .button-box button {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 18px 20px;
+      background: #5a5a5a;
+      color: #f1f1f1;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 20px;
+      box-shadow: 0 4px rgba(0,0,0,0.3);
+      transition: all 0.2s ease;
+      width: 90%;
+      max-width: 360px;
+    }
+
+    .button-box button:hover {
+      background: #4a4a4a;
+    }
+
+    .button-box button:active {
+      transform: translateY(2px);
+      box-shadow: 0 2px rgba(0,0,0,0.3);
+    }
+
+    /* Responsiv för små skärmar */
+    @media (max-width: 480px) {
+      .content-box h2 {
+        font-size: 22px;
+      }
+
+      .button-box button {
+        font-size: 22px;
+        padding: 22px 25px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="content-box">
+      <h2 id="challenge">Tryck på knappen för att dra ett kort!</h2>
+      <img id="cardImage" src="" alt="">
+    </div>
+  </div>
+
+  <div class="button-box">
+    <button id="drawButton" onclick="drawCard()">Dra kort</button>
+  </div>
+
+  <script>
+async function drawCard() {
+  try {
+    const res = await fetch("/draw");
+    const data = await res.json();
+
+    document.getElementById("challenge").innerText = data.text;
+    const img = document.getElementById("cardImage");
+    img.src = "images/" + data.file; // public/images/
+    img.style.display = "block";
+  } catch (error) {
+    console.error("Fel vid hämtning av kort:", error);
+  }
+}
+
+
+    const button = document.querySelector("#drawButton");
+
+    button.addEventListener("click", () => {
+      button.style.transform = "translateY(3px) scale(0.98)";
+      button.style.boxShadow = "0 2px rgba(0,0,0,0.3)";
+      setTimeout(() => {
+        button.style.transform = "translateY(0) scale(1)";
+        button.style.boxShadow = "0 4px rgba(0,0,0,0.3)";
+      }, 100);
+    });
+  </script>
+</body>
+</html>

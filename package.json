@@ -1,0 +1,16 @@
+{
+  "name": "discgolf-app",
+  "version": "1.0.0",
+  "description": "En enkel discgolf-utmaningsapp",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": ["discgolf", "utmaning", "express"],
+  "author": "Tommy",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
