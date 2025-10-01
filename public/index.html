@@ -11,75 +11,64 @@
       background: #121212;
       color: white;
       margin: 0;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center; /* vertikal centrering av kortet */
-      overflow: hidden;
+      height: 100dvh; /* hela skärmen */
+      display: grid;
+      grid-template-rows: auto 1fr auto; /* text, bild, knapp */
     }
 
-    .card {
-      width: 100%;
-      max-width: 360px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 0 10px;
-      box-sizing: border-box;
-    }
-
-    /* Box för text och bild - grå */
-    .content-box {
-      width: 100%;
-      background: #2c2c2c;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center; /* centrerar innehåll vertikalt */
-      gap: 12px;
-      min-height: 200px;
-    }
-
-    .content-box h2 {
+    /* Modul 3: Text högst upp */
+    .text-box {
+      padding: 10px;
       text-align: center;
+      background: #2c2c2c;
+      border-bottom: 1px solid #444;
+    }
+
+    .text-box h2 {
       margin: 0;
-      color: #f1f1f1;
-      font-size: 20px;
+      font-size: 18px;
       font-weight: bold;
+      color: #f1f1f1;
+      word-wrap: break-word;
     }
 
-    .content-box img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 8px;
-      display: none;
-    }
-
-    /* Knappen längst ner */
-    .button-box {
-      position: fixed;
-      bottom: 20px;
-      left: 0;
-      width: 100%;
+    /* Modul 2: Bild i mitten */
+    .image-box {
       display: flex;
       justify-content: center;
-      z-index: 100;
+      align-items: center;
+      overflow: hidden; /* så inget sticker ut */
+    }
+
+    .image-box img {
+      max-width: 80%;   /* anpassa storlek */
+      max-height: 80%;
+      border-radius: 12px;
+      display: none;
+      object-fit: contain;
+      background: #2c2c2c;
+      padding: 5px;
+    }
+
+    /* Modul 1: Knapp längst ner */
+    .button-box {
+      padding: 10px;
+      background: #121212;
+      display: flex;
+      justify-content: center;
     }
 
     .button-box button {
       display: flex;
       justify-content: center;
       align-items: center;
-      padding: 18px 20px;
+      padding: 15px 20px;
       background: #5a5a5a;
       color: #f1f1f1;
       border: none;
       border-radius: 12px;
       cursor: pointer;
-      font-size: 20px;
+      font-size: 18px;
       box-shadow: 0 4px rgba(0,0,0,0.3);
       transition: all 0.2s ease;
       width: 90%;
@@ -95,49 +84,63 @@
       box-shadow: 0 2px rgba(0,0,0,0.3);
     }
 
-    /* Responsiv för små skärmar */
+    /* Responsivt för små mobiler */
     @media (max-width: 480px) {
-      .content-box h2 {
-        font-size: 22px;
+      .text-box h2 {
+        font-size: 32px;
       }
 
       .button-box button {
-        font-size: 22px;
-        padding: 22px 25px;
+        font-size: 18px;
+        padding: 16px 20px;
+      }
+
+      .image-box img {
+        max-width: 80vw;   /* max 80% av skärmens bredd */
+  max-height: 40vh;  /* max 40% av skärmens höjd */
+  width: auto;       /* behåll proportioner */
+  height: auto;      /* behåll proportioner */
+  object-fit: contain; /* skalas inom rutan utan att klippas */
       }
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="content-box">
-      <h2 id="challenge">Tryck på knappen för att dra ett kort!</h2>
-      <img id="cardImage" src="" alt="">
-    </div>
+  <!-- Modul 3: Text -->
+  <div class="text-box">
+    <h2 id="challenge">Tryck på knappen för att dra ett kort!</h2>
   </div>
 
+  <!-- Modul 2: Bild -->
+  <div class="image-box">
+    <img id="cardImage" src="" alt="">
+  </div>
+
+  <!-- Modul 1: Knapp -->
   <div class="button-box">
     <button id="drawButton" onclick="drawCard()">Dra kort</button>
   </div>
 
   <script>
-async function drawCard() {
-  try {
-    const res = await fetch("/draw");
-    const data = await res.json();
+    async function drawCard() {
+      try {
+        const res = await fetch("/draw");
+        const data = await res.json();
 
-    document.getElementById("challenge").innerText = data.text;
-    const img = document.getElementById("cardImage");
-    img.src = "images/" + data.file; // public/images/
-    img.style.display = "block";
-  } catch (error) {
-    console.error("Fel vid hämtning av kort:", error);
-  }
-}
+        // Uppdatera text
+        document.getElementById("challenge").innerText = data.text;
 
+        // Uppdatera bild
+        const img = document.getElementById("cardImage");
+        img.src = "images/" + data.file;
+        img.style.display = "block";
+      } catch (error) {
+        console.error("Fel vid hämtning av kort:", error);
+      }
+    }
 
+    // Knapp-animation
     const button = document.querySelector("#drawButton");
-
     button.addEventListener("click", () => {
       button.style.transform = "translateY(3px) scale(0.98)";
       button.style.boxShadow = "0 2px rgba(0,0,0,0.3)";
