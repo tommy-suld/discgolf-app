@@ -105,12 +105,12 @@
     { "file": "bag.jpg", "text": "Inspel backhand, välj disc från motståndarens väska" },
     { "file": "bag.jpg", "text": "Inspel hyzer, välj disc från motståndarens väska" },
     { "file": "bag.jpg", "text": "Inspel anhyzer, välj disc från motståndarens väska" },
-    { "file": "stahoger.png", "text": "Inspel stå på höger ben, välj disc från motståndarens väska" },
+    { "file": "bag.jpg", "text": "Inspel stå på höger ben, välj disc från motståndarens väska" },
     { "file": "bag.jpg", "text": "Inspel stå på vänster ben, välj disc från motståndarens väska" },
     { "file": "bag.png", "text": "Inspel hoppandes på ett ben, välj disc från motståndarens väska" },
-    { "file": "luften.png", "text": "Inspel i luften, välj disc från motståndarens väska" },
-    { "file": "inspel50.png", "text": "Inspel forehand roller, välj disc från motståndarens väska" },
-    { "file": "backhandroller.png", "text": "Inspel backhand roller, välj disc från motståndarens väska" },
+    { "file": "bag.png", "text": "Inspel i luften, välj disc från motståndarens väska" },
+    { "file": "bag.png", "text": "Inspel forehand roller, välj disc från motståndarens väska" },
+    { "file": "bag.png", "text": "Inspel backhand roller, välj disc från motståndarens väska" },
     { "file": "approach_oneknee_minimarker.jpeg", "text": "Inspel hukandes på ett knä + minimarker" } 
 
   ],
