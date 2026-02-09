@@ -23,25 +23,47 @@ Object.values(imagesData).forEach(categoryArray => {
   allCards.push(...categoryArray);
 });
 
+// Hjälpfunktion: normalisera kategori-param till nyckeln i challenges.json
+function normalizeCategory(param) {
+  if (!param) return null;
+  const p = String(param).toLowerCase();
+  if (p === "tee" || p === "utkast") return "utkast"; // UI: "tee" motsvarar "utkast"
+  if (p === "inspel" || p === "approach") return "inspel";
+  if (p === "putt" || p === "putts") return "putt";
+  return p; // fallback till det som skickats in
+}
+
 // Startsidan
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public/index.html"));
 });
 
-// Slumpa fram ett kort från alla kategorier
+// Slumpa fram ett kort (alla kategorier eller specifik via query-param) 
 app.get("/draw", (req, res) => {
+  const normalized = normalizeCategory(req.query.category);
+
+  if (normalized) {
+    const cards = imagesData[normalized];
+    if (!cards || !Array.isArray(cards) || cards.length === 0) {
+      return res.status(400).json({ error: "Ogiltig kategori" });
+    }
+    const randomIndex = Math.floor(Math.random() * cards.length);
+    const selected = cards[randomIndex];
+    return res.json(selected);
+  }
+
   const randomIndex = Math.floor(Math.random() * allCards.length);
   const selected = allCards[randomIndex];
-  res.json(selected);
+  return res.json(selected);
 });
 
 // Slumpa fram ett kort från en viss kategori
 app.get("/drawCategory", (req, res) => {
-  const category = req.query.category;
-  if (!category || !imagesData[category]) {
+  const normalized = normalizeCategory(req.query.category);
+  if (!normalized || !imagesData[normalized]) {
     return res.status(400).json({ error: "Ogiltig kategori" });
   }
-  const cards = imagesData[category];
+  const cards = imagesData[normalized];
   const randomIndex = Math.floor(Math.random() * cards.length);
   const selected = cards[randomIndex];
   res.json(selected);

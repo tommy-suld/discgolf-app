@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html lang="sv">
+<html lang="sv" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Discgolf Challenge</title>
+  <!-- Pico CSS (classless) for nicer baseline styles without altering our explicit sizes) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1.5.10/css/pico.classless.min.css">
 
   <style>
     body {
@@ -27,6 +29,8 @@
     .text-box h2 {
       margin: 0;
       font-size: 18px;
+      line-height: 1.3;           /* stabil linjehöjd */
+      min-height: 2.6em;          /* reservera alltid plats för 2 rader */
       font-weight: bold;
       color: #f1f1f1;
       word-wrap: break-word;
@@ -38,6 +42,7 @@
       justify-content: center;
       align-items: center;
       overflow: hidden; /* så inget sticker ut */
+      position: relative; /* möjliggör skeletteffekt ovanpå bilden */
     }
 
     .image-box img {
@@ -48,14 +53,50 @@
       object-fit: contain;
       background: #2c2c2c;
       padding: 5px;
+      will-change: opacity, transform; /* bättre prestanda vid animation */
     }
+
+    /* Bildanimationer */
+    @keyframes fadeScaleIn {
+      0% { opacity: 0; transform: scale(0.98); filter: blur(2px); }
+      100% { opacity: 1; transform: scale(1); filter: blur(0); }
+    }
+
+    @keyframes spinIn {
+      0% { opacity: 0; transform: rotate(-10deg) scale(0.98); }
+      100% { opacity: 1; transform: rotate(0deg) scale(1); }
+    }
+
+    .animate-fade-in { animation: fadeScaleIn 350ms ease-out; }
+    .animate-spin-in { animation: spinIn 450ms ease-out; }
 
     /* Modul 1: Knapp längst ner */
     .button-box {
       padding: 10px;
       background: #121212;
       display: flex;
-      justify-content: center;
+      flex-direction: column; /* två rader: en stor knapp och en rad med tre knappar */
+      align-items: center;     /* centrera horisontellt */
+      gap: 6px;                /* mindre vertikal luft mellan raderna */
+      padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); /* iPhone safe area */
+    }
+
+    /* Rad med tre knappar i 1/3 vardera */
+    .button-row {
+      display: flex;            /* flex istället för grid för enklare centrering */
+      justify-content: center;  /* centrera innehållet */
+      align-items: stretch;     /* samma höjd på knapparna */
+      gap: 6px;                 /* horisontell luft mellan knapparna */
+      width: 90%;
+      max-width: 360px;
+      margin: 0 auto;           /* centrera hela raden horisontellt */
+    }
+
+    /* Knappar i raden ska fylla cellen, inte använda hel radens max-bredd */
+    .button-row .drawBtn {
+      flex: 1 1 0;             /* lika breda knappar, fyll radens bredd */
+      width: auto;
+      max-width: none;
     }
 
     .button-box button {
@@ -63,20 +104,51 @@
       justify-content: center;
       align-items: center;
       padding: 15px 20px;
-      background: #5a5a5a;
-      color: #f1f1f1;
-      border: none;
-      border-radius: 12px;
+      /* Use Pico theme tokens with safe fallbacks to keep sizes intact */
+      background: var(--pico-primary, #5a5a5a);
+      color: var(--pico-primary-inverse, #f1f1f1);
+  border: 1px solid var(--pico-muted-border-color, #3a3a3a);
+      border-radius: var(--pico-border-radius, 12px);
       cursor: pointer;
       font-size: 18px;
       box-shadow: 0 4px rgba(0,0,0,0.3);
-      transition: all 0.2s ease;
+      transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
       width: 90%;
       max-width: 360px;
     }
+    /* Skeletteffekt medan bild laddar */
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    .image-box.loading::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      width: min(80%, 600px);
+      height: min(80%, 70vh);
+      border-radius: 12px;
+      background: linear-gradient(90deg, rgba(60,60,60,0.35) 0%, rgba(120,120,120,0.25) 50%, rgba(60,60,60,0.35) 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s linear infinite;
+    }
+
+    /* Respekt för användare som föredrar mindre rörelse */
+    @media (prefers-reduced-motion: reduce) {
+      .animate-fade-in, .animate-spin-in { animation: none !important; }
+      .image-box.loading::before { animation: none; }
+    }
+
+    /* Fallback-spacering mellan ÖVRE knappen och RADEN under (inte inne i raden) */
+    .button-box > * + * {
+      margin-top: 6px;
+    }
 
     .button-box button:hover {
-      background: #4a4a4a;
+      background: var(--pico-primary-hover, #4a4a4a);
+      box-shadow: 0 6px rgba(0,0,0,0.35);
     }
 
     .button-box button:active {
@@ -84,15 +156,28 @@
       box-shadow: 0 2px rgba(0,0,0,0.3);
     }
 
+    .button-box button:focus-visible {
+      outline: none;
+      /* Theme-friendly focus ring using Pico token with fallback */
+      box-shadow: 0 0 0 0.2rem var(--pico-primary-focus, rgba(255,255,255,0.35));
+    }
+
     /* Responsivt för små mobiler */
     @media (max-width: 480px) {
       .text-box h2 {
         font-size: 32px;
+        line-height: 1.3;
+        min-height: 2.6em;        /* två rader även i mobil */
       }
 
       .button-box button {
         font-size: 18px;
         padding: 16px 20px;
+      }
+
+      /* Se till att små knappar inte radbryter och håller samma höjd */
+      .button-row .drawBtn {
+        white-space: nowrap;
       }
 
       .image-box img {
@@ -118,13 +203,19 @@
 
   <!-- Modul 1: Knapp -->
   <div class="button-box">
-    <button id="drawButton" onclick="drawCard()">Dra kort</button>
+    <button class="drawBtn" onclick="drawCard()">Dra slumpmässigt kort</button>
+    <div class="button-row">
+      <button class="drawBtn" onclick="drawCard('tee')">Dra utkast</button>
+      <button class="drawBtn" onclick="drawCard('inspel')">Dra inspel</button>
+      <button class="drawBtn" onclick="drawCard('putt')">Dra putt</button>
+    </div>
   </div>
 
   <script>
-    async function drawCard() {
+    async function drawCard(category) {
       try {
-        const res = await fetch("/draw");
+        const url = category ? `/draw?category=${encodeURIComponent(category)}` : '/draw';
+        const res = await fetch(url);
         const data = await res.json();
 
         // Uppdatera text
@@ -132,22 +223,49 @@
 
         // Uppdatera bild
         const img = document.getElementById("cardImage");
-        img.src = "images/" + data.file;
-        img.style.display = "block";
+        const file = data.file;
+        let folder = '';
+        if (file.startsWith('tee_')) folder = 'tee';
+        else if (file.startsWith('approach_')) folder = 'inspel';
+        else if (file.startsWith('putt_')) folder = 'putt';
+
+        // Förbered ny bild: visa skeletteffekt, göm bild, sätt src & alt, animera in när den laddats
+        const imageBox = document.querySelector('.image-box');
+        imageBox.classList.add('loading');
+        img.classList.remove('animate-fade-in', 'animate-spin-in');
+        img.style.display = 'none';
+        img.src = `images/${folder}/${file}`;
+        img.alt = data.text;
+        img.onload = () => {
+          imageBox.classList.remove('loading');
+          img.style.display = 'block';
+          // Välj effekt: fade som standard (byt till 'animate-spin-in' om du vill snurr-effekt)
+          img.classList.add('animate-fade-in');
+          // Ta bort klass efter animation så den kan triggas igen nästa gång
+          setTimeout(() => {
+            img.classList.remove('animate-fade-in');
+          }, 500);
+        };
+        img.onerror = () => {
+          imageBox.classList.remove('loading');
+          img.style.display = 'none';
+        };
       } catch (error) {
         console.error("Fel vid hämtning av kort:", error);
       }
     }
 
-    // Knapp-animation
-    const button = document.querySelector("#drawButton");
-    button.addEventListener("click", () => {
-      button.style.transform = "translateY(3px) scale(0.98)";
-      button.style.boxShadow = "0 2px rgba(0,0,0,0.3)";
-      setTimeout(() => {
-        button.style.transform = "translateY(0) scale(1)";
-        button.style.boxShadow = "0 4px rgba(0,0,0,0.3)";
-      }, 100);
+    // Knapp-animation för alla knappar
+    const buttons = document.querySelectorAll('.drawBtn');
+    buttons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        btn.style.transform = 'translateY(3px) scale(0.98)';
+        btn.style.boxShadow = '0 2px rgba(0,0,0,0.3)';
+        setTimeout(() => {
+          btn.style.transform = 'translateY(0) scale(1)';
+          btn.style.boxShadow = '0 4px rgba(0,0,0,0.3)';
+        }, 100);
+      });
     });
   </script>
 </body>
