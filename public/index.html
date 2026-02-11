@@ -4,36 +4,111 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Discgolf Challenge</title>
-  <!-- Pico CSS (classless) for nicer baseline styles without altering our explicit sizes) -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1.5.10/css/pico.classless.min.css">
+  
+  <!-- PWA Meta Tags -->
+  <meta name="description" content="Träna discgolf med slumpmässiga utmaningar för tee, inspel och putt">
+  <meta name="theme-color" content="#5ebaaa">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Discgolf">
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json">
+  
+  <!-- Apple Touch Icons -->
+  <link rel="apple-touch-icon" href="/images/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/images/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/images/icon-512.png">
+  
+  <!-- Tailwind CSS -->
+  <link rel="stylesheet" href="/output.css" />
 
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #121212;
+      background: #0a1f1c; /* mörkgrön som i bilden */
       color: white;
       margin: 0;
       height: 100dvh; /* hela skärmen */
       display: grid;
       grid-template-rows: auto 1fr auto; /* text, bild, knapp */
+      position: relative;
     }
 
-    /* Modul 3: Text högst upp */
-    .text-box {
-      padding: 10px;
-      text-align: center;
-      background: #2c2c2c;
+    /* Bakgrundsbild med transparency */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('/images/forest-background.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      opacity: 0.1;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Se till att innehållet är ovanför bakgrunden */
+    body > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Dölj standard loading-indikatorer */
+    *::-webkit-loading-indicator,
+    *::before:loading,
+    *::after:loading {
+      display: none !important;
+    }
+
+    /* Custom stack - alla bilder på samma plats */
+    .custom-stack {
+      position: relative;
+      width: 90%;  /* samma bredd som knapparna */
+      max-width: 360px; /* samma max-width som knapparna */
+      margin: 0 auto; /* centrera */
+      padding-bottom: 100%; /* gör containern kvadratisk (aspect ratio 1:1) */
+    }
+    .custom-stack img {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+                  opacity 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      will-change: transform, opacity;
+      backface-visibility: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    .custom-stack img:nth-child(2) {
+      transform: translate(calc(-50% - 12px), calc(-50% - 12px)); /* centrerad + offset */
+      z-index: 1;
+    }
+    .custom-stack img:nth-child(1) {
+      transform: translate(-50%, -50%); /* perfekt centrerad */
+      z-index: 2;
+    }
+
+    /* Modul 3: Chat-bubbla högst upp */
+    .chat-container {
+      padding: 16px;
+      background: #142e2a; /* mörkare grön ton */
       border-bottom: 1px solid #444;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
-
-    .text-box h2 {
-      margin: 0;
-      font-size: 18px;
-      line-height: 1.3;           /* stabil linjehöjd */
-      min-height: 2.6em;          /* reservera alltid plats för 2 rader */
-      font-weight: bold;
-      color: #f1f1f1;
-      word-wrap: break-word;
+    
+    .chat-container .chat {
+      display: flex;
+      justify-content: center;
+      width: 100%;
     }
 
     /* Modul 2: Bild i mitten */
@@ -58,108 +133,60 @@
 
     /* Bildanimationer */
     @keyframes fadeScaleIn {
-      0% { opacity: 0; transform: scale(0.98); filter: blur(2px); }
-      100% { opacity: 1; transform: scale(1); filter: blur(0); }
+      0% { 
+        opacity: 0; 
+        transform: scale(0.92) translateZ(0); 
+      }
+      100% { 
+        opacity: 1; 
+        transform: scale(1) translateZ(0); 
+      }
     }
 
     @keyframes spinIn {
-      0% { opacity: 0; transform: rotate(-10deg) scale(0.98); }
-      100% { opacity: 1; transform: rotate(0deg) scale(1); }
+      0% { 
+        opacity: 0; 
+        transform: rotate(-3deg) scale(0.92) translateZ(0); 
+      }
+      100% { 
+        opacity: 1; 
+        transform: rotate(0deg) scale(1) translateZ(0); 
+      }
     }
 
-    .animate-fade-in { animation: fadeScaleIn 350ms ease-out; }
-    .animate-spin-in { animation: spinIn 450ms ease-out; }
-
-    /* Modul 1: Knapp längst ner */
-    .button-box {
-      padding: 10px;
-      background: #121212;
-      display: flex;
-      flex-direction: column; /* två rader: en stor knapp och en rad med tre knappar */
-      align-items: center;     /* centrera horisontellt */
-      gap: 6px;                /* mindre vertikal luft mellan raderna */
-      padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); /* iPhone safe area */
+    .animate-fade-in { 
+      animation: fadeScaleIn 500ms cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; 
+    }
+    .animate-spin-in { 
+      animation: spinIn 600ms cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; 
     }
 
-    /* Rad med tre knappar i 1/3 vardera */
-    .button-row {
-      display: flex;            /* flex istället för grid för enklare centrering */
-      justify-content: center;  /* centrera innehållet */
-      align-items: stretch;     /* samma höjd på knapparna */
-      gap: 6px;                 /* horisontell luft mellan knapparna */
-      width: 90%;
-      max-width: 360px;
-      margin: 0 auto;           /* centrera hela raden horisontellt */
+    /* Laddningsanimation - roterande disc */
+    @keyframes spin {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
     }
 
-    /* Knappar i raden ska fylla cellen, inte använda hel radens max-bredd */
-    .button-row .drawBtn {
-      flex: 1 1 0;             /* lika breda knappar, fyll radens bredd */
-      width: auto;
-      max-width: none;
-    }
-
-    .button-box button {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 15px 20px;
-      /* Use Pico theme tokens with safe fallbacks to keep sizes intact */
-      background: var(--pico-primary, #5a5a5a);
-      color: var(--pico-primary-inverse, #f1f1f1);
-  border: 1px solid var(--pico-muted-border-color, #3a3a3a);
-      border-radius: var(--pico-border-radius, 12px);
-      cursor: pointer;
-      font-size: 18px;
-      box-shadow: 0 4px rgba(0,0,0,0.3);
-      transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-      width: 90%;
-      max-width: 360px;
-    }
-    /* Skeletteffekt medan bild laddar */
-    @keyframes shimmer {
-      0% { background-position: -200% 0; }
-      100% { background-position: 200% 0; }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
     }
 
     .image-box.loading::before {
-      content: '';
+      content: '🥏';
       position: absolute;
-      inset: 0;
-      margin: auto;
-      width: min(80%, 600px);
-      height: min(80%, 70vh);
-      border-radius: 12px;
-      background: linear-gradient(90deg, rgba(60,60,60,0.35) 0%, rgba(120,120,120,0.25) 50%, rgba(60,60,60,0.35) 100%);
-      background-size: 200% 100%;
-      animation: shimmer 1.2s linear infinite;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 4rem;
+      animation: spin 1s linear infinite, pulse 2s ease-in-out infinite;
+      z-index: 10;
     }
 
     /* Respekt för användare som föredrar mindre rörelse */
     @media (prefers-reduced-motion: reduce) {
       .animate-fade-in, .animate-spin-in { animation: none !important; }
-      .image-box.loading::before { animation: none; }
-    }
-
-    /* Fallback-spacering mellan ÖVRE knappen och RADEN under (inte inne i raden) */
-    .button-box > * + * {
-      margin-top: 6px;
-    }
-
-    .button-box button:hover {
-      background: var(--pico-primary-hover, #4a4a4a);
-      box-shadow: 0 6px rgba(0,0,0,0.35);
-    }
-
-    .button-box button:active {
-      transform: translateY(2px);
-      box-shadow: 0 2px rgba(0,0,0,0.3);
-    }
-
-    .button-box button:focus-visible {
-      outline: none;
-      /* Theme-friendly focus ring using Pico token with fallback */
-      box-shadow: 0 0 0 0.2rem var(--pico-primary-focus, rgba(255,255,255,0.35));
+      .image-box.loading::before { animation: pulse 2s ease-in-out infinite; }
     }
 
     /* Responsivt för små mobiler */
@@ -168,16 +195,6 @@
         font-size: 32px;
         line-height: 1.3;
         min-height: 2.6em;        /* två rader även i mobil */
-      }
-
-      .button-box button {
-        font-size: 18px;
-        padding: 16px 20px;
-      }
-
-      /* Se till att små knappar inte radbryter och håller samma höjd */
-      .button-row .drawBtn {
-        white-space: nowrap;
       }
 
       .image-box img {
@@ -191,27 +208,48 @@
   </style>
 </head>
 <body>
-  <!-- Modul 3: Text -->
-  <div class="text-box">
-    <h2 id="challenge">Tryck på knappen för att dra ett kort!</h2>
+  <!-- Modul 3: Chat-bubbla -->
+  <div class="chat-container">
+    <div class="chat chat-start">
+      <div class="chat-bubble bg-teal-600 text-white text-lg font-bold min-h-[3rem] flex items-center justify-center text-center" id="challenge">
+        Tryck på knappen för att dra ett kort!
+      </div>
+    </div>
   </div>
 
   <!-- Modul 2: Bild -->
   <div class="image-box">
-    <img id="cardImage" src="" alt="">
+    <div class="custom-stack">
+      <img id="cardImage" src="" alt="" class="rounded-2xl shadow-2xl" style="display: none;">
+      <img id="cardImage2" src="" alt="" class="rounded-2xl shadow-xl" style="display: none;">
+    </div>
   </div>
 
   <!-- Modul 1: Knapp -->
-  <div class="button-box">
-    <button class="drawBtn" onclick="drawCard()">Dra slumpmässigt kort</button>
-    <div class="button-row">
-      <button class="drawBtn" onclick="drawCard('tee')">Dra utkast</button>
-      <button class="drawBtn" onclick="drawCard('inspel')">Dra inspel</button>
-      <button class="drawBtn" onclick="drawCard('putt')">Dra putt</button>
+  <div class="flex flex-col items-center gap-3 p-4 bg-dark-900 pb-[calc(16px+env(safe-area-inset-bottom,0px))]">
+    <button 
+      class="px-8 py-5 bg-teal-500 text-white rounded-3xl text-lg font-medium hover:bg-teal-400 active:scale-95 transition-all shadow-xl cursor-pointer flex items-center justify-center w-11/12 max-w-md mx-auto"
+      onclick="drawCard()">
+      Dra slumpmässigt kort
+    </button>
+    <div class="flex justify-center items-stretch gap-2 w-11/12 max-w-md mx-auto">
+      <button class="flex-1 px-4 py-4 bg-teal-600 text-white rounded-2xl text-base font-medium hover:bg-teal-500 active:scale-95 transition-all shadow-lg cursor-pointer flex items-center justify-center whitespace-nowrap" onclick="drawCard('tee')">Dra utkast</button>
+      <button class="flex-1 px-4 py-4 bg-teal-600 text-white rounded-2xl text-base font-medium hover:bg-teal-500 active:scale-95 transition-all shadow-lg cursor-pointer flex items-center justify-center whitespace-nowrap" onclick="drawCard('inspel')">Dra inspel</button>
+      <button class="flex-1 px-4 py-4 bg-teal-600 text-white rounded-2xl text-base font-medium hover:bg-teal-500 active:scale-95 transition-all shadow-lg cursor-pointer flex items-center justify-center whitespace-nowrap" onclick="drawCard('putt')">Dra putt</button>
     </div>
   </div>
 
   <script>
+    // Funktion för att pre-ladda en bild
+    function preloadImage(src) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
+      });
+    }
+
     async function drawCard(category) {
       try {
         const url = category ? `/draw?category=${encodeURIComponent(category)}` : '/draw';
@@ -221,35 +259,73 @@
         // Uppdatera text
         document.getElementById("challenge").innerText = data.text;
 
-        // Uppdatera bild
-        const img = document.getElementById("cardImage");
+        // Stack-effekt: hämta båda bilderna
+        const img1 = document.getElementById("cardImage");
+        const img2 = document.getElementById("cardImage2");
+        const imageBox = document.querySelector('.image-box');
+
         const file = data.file;
         let folder = '';
         if (file.startsWith('tee_')) folder = 'tee';
         else if (file.startsWith('approach_')) folder = 'inspel';
         else if (file.startsWith('putt_')) folder = 'putt';
 
-        // Förbered ny bild: visa skeletteffekt, göm bild, sätt src & alt, animera in när den laddats
-        const imageBox = document.querySelector('.image-box');
+        const newImageSrc = `images/${folder}/${file}`;
+
+        // Visa laddningsanimation
         imageBox.classList.add('loading');
-        img.classList.remove('animate-fade-in', 'animate-spin-in');
-        img.style.display = 'none';
-        img.src = `images/${folder}/${file}`;
-        img.alt = data.text;
-        img.onload = () => {
+
+        // Pre-ladda den nya bilden
+        try {
+          await preloadImage(newImageSrc);
+        } catch (error) {
+          console.error("Kunde inte ladda bilden:", error);
           imageBox.classList.remove('loading');
-          img.style.display = 'block';
-          // Välj effekt: fade som standard (byt till 'animate-spin-in' om du vill snurr-effekt)
-          img.classList.add('animate-fade-in');
-          // Ta bort klass efter animation så den kan triggas igen nästa gång
-          setTimeout(() => {
-            img.classList.remove('animate-fade-in');
-          }, 500);
-        };
-        img.onerror = () => {
-          imageBox.classList.remove('loading');
-          img.style.display = 'none';
-        };
+          return;
+        }
+
+        // Ta bort laddningsanimation
+        imageBox.classList.remove('loading');
+        
+        // Rotera: den nuvarande bilden (img1) blir bakgrundsbilden (img2)
+        if (img1.src && img1.src.includes('images/')) {
+          // Flytta nuvarande bild till img2 (bakgrunden) - den stannar kvar
+          img2.src = img1.src;
+          img2.alt = img1.alt;
+          img2.style.display = 'block';
+          img2.style.opacity = '0.85';
+          img2.style.transform = 'translate(calc(-50% - 12px), calc(-50% - 12px)) scale(1)';
+        }
+
+        // Förbered den nya bilden att glida in framför den gamla
+        img1.style.transition = 'none'; // Inaktivera transitions temporärt
+        img1.classList.remove('animate-fade-in', 'animate-spin-in');
+        img1.style.display = 'block';
+        img1.style.opacity = '0';
+        img1.style.transform = 'translate(-50%, -50%) scale(0.92)';
+        img1.src = newImageSrc;
+        img1.alt = data.text;
+        
+        // Tvinga en reflow
+        void img1.offsetHeight;
+        
+        // Återaktivera transitions
+        img1.style.transition = '';
+
+        // Fade in den nya bilden smidigt - glider in framför den gamla
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            img1.style.opacity = '1';
+            img1.style.transform = 'translate(-50%, -50%) scale(1)';
+            img1.classList.add('animate-fade-in');
+          });
+        });
+
+        // Ta bort klass efter animation
+        setTimeout(() => {
+          img1.classList.remove('animate-fade-in');
+        }, 600);
+
       } catch (error) {
         console.error("Fel vid hämtning av kort:", error);
       }
@@ -266,6 +342,35 @@
           btn.style.boxShadow = '0 4px rgba(0,0,0,0.3)';
         }, 100);
       });
+    });
+
+    // Service Worker Registrering (PWA)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then((registration) => {
+            console.log('✅ Service Worker registrerad:', registration.scope);
+          })
+          .catch((error) => {
+            console.log('❌ Service Worker misslyckades:', error);
+          });
+      });
+    }
+
+    // PWA Install Prompt
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      
+      // Visa en diskret install-knapp (du kan lägga till en knapp här senare)
+      console.log('💾 PWA kan installeras!');
+    });
+
+    // Logga när appen installeras
+    window.addEventListener('appinstalled', () => {
+      console.log('🎉 PWA installerad på hemskärmen!');
+      deferredPrompt = null;
     });
   </script>
 </body>

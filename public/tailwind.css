@@ -1,0 +1,20 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+@theme {
+  /* Teal/grön palette inspirerad av bilden */
+  --color-teal-500: #5ebaaa;
+  --color-teal-600: #4a9d8e;
+  --color-teal-700: #3a8273;
+  --color-teal-400: #72c9bb;
+  
+  /* Mörka nyanser */
+  --color-dark-900: #0a1f1c;
+  --color-dark-800: #142e2a;
+  --color-dark-700: #1e3d38;
+  
+  /* Gråa för text */
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+}
