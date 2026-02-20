@@ -3,39 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Discgolf Challenge</title>
+  <title>Discgolf Challenge - Välj Spel</title>
   
-  <!-- PWA Meta Tags -->
-  <meta name="description" content="Träna discgolf med slumpmässiga utmaningar för tee, inspel och putt">
+  <meta name="description" content="Träna discgolf med olika spellägen">
   <meta name="theme-color" content="#5ebaaa">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Discgolf">
   
-  <!-- PWA Manifest -->
   <link rel="manifest" href="/manifest.json">
-  
-  <!-- Apple Touch Icons -->
   <link rel="apple-touch-icon" href="/images/icon-192.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/images/icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="/images/icon-512.png">
   
-  <!-- Tailwind CSS -->
   <link rel="stylesheet" href="/output.css" />
 
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #0a1f1c; /* mörkgrön som i bilden */
+      background: #0a1f1c;
       color: white;
       margin: 0;
-      height: 100dvh; /* hela skärmen */
-      display: grid;
-      grid-template-rows: auto 1fr auto; /* text, bild, knapp */
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
       position: relative;
+      padding: 20px;
     }
 
-    /* Bakgrundsbild med transparency */
     body::before {
       content: '';
       position: fixed;
@@ -52,299 +49,217 @@
       pointer-events: none;
     }
 
-    /* Se till att innehållet är ovanför bakgrunden */
     body > * {
       position: relative;
       z-index: 1;
     }
 
-    /* Dölj standard loading-indikatorer */
-    *::-webkit-loading-indicator,
-    *::before:loading,
-    *::after:loading {
-      display: none !important;
+    .menu-container {
+      width: 100%;
+      max-width: 600px;
+      text-align: center;
     }
 
-    /* Custom stack - alla bilder på samma plats */
-    .custom-stack {
-      position: relative;
-      width: 90%;  /* samma bredd som knapparna */
-      max-width: 360px; /* samma max-width som knapparna */
-      margin: 0 auto; /* centrera */
-      padding-bottom: 100%; /* gör containern kvadratisk (aspect ratio 1:1) */
+    .title {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #5ebaaa;
+      margin-bottom: 0.5rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      letter-spacing: 1px;
     }
-    .custom-stack img {
+
+    .subtitle {
+      font-size: 1rem;
+      color: #72c9bb;
+      margin-bottom: 3rem;
+      opacity: 0.8;
+      font-weight: 300;
+    }
+
+    .game-card {
+      background: linear-gradient(135deg, #142e2a 0%, #0a1f1c 100%);
+      border: 2px solid rgba(94, 186, 170, 0.3);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 1.2rem;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      box-shadow: 0 4px 20px rgba(94, 186, 170, 0.15);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      text-align: left;
+    }
+
+    .game-card::before {
+      content: '';
       position: absolute;
-      top: 50%;
-      left: 50%;
+      top: 0;
+      left: -100%;
       width: 100%;
       height: 100%;
-      object-fit: contain;
-      transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
-                  opacity 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-      will-change: transform, opacity;
-      backface-visibility: hidden;
-      -webkit-font-smoothing: antialiased;
-    }
-    .custom-stack img:nth-child(2) {
-      transform: translate(calc(-50% - 12px), calc(-50% - 12px)); /* centrerad + offset */
-      z-index: 1;
-    }
-    .custom-stack img:nth-child(1) {
-      transform: translate(-50%, -50%); /* perfekt centrerad */
-      z-index: 2;
+      background: linear-gradient(90deg, transparent, rgba(94, 186, 170, 0.1), transparent);
+      transition: left 0.5s;
     }
 
-    /* Modul 3: Chat-bubbla högst upp */
-    .chat-container {
-      padding: 16px;
-      background: #142e2a; /* mörkare grön ton */
-      border-bottom: 1px solid #444;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    
-    .chat-container .chat {
-      display: flex;
-      justify-content: center;
-      width: 100%;
+    .game-card:hover::before {
+      left: 100%;
     }
 
-    /* Modul 2: Bild i mitten */
-    .image-box {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden; /* så inget sticker ut */
-      position: relative; /* möjliggör skeletteffekt ovanpå bilden */
+    .game-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 30px rgba(94, 186, 170, 0.3);
+      border-color: #5ebaaa;
     }
 
-    .image-box img {
-      max-width: 80%;   /* anpassa storlek */
-      max-height: 80%;
+    .game-card:active {
+      transform: translateY(-2px) scale(0.98);
+    }
+
+    .game-thumbnail {
+      width: 80px;
+      height: 80px;
       border-radius: 12px;
-      display: none;
-      object-fit: contain;
-      background: #2c2c2c;
-      padding: 5px;
-      will-change: opacity, transform; /* bättre prestanda vid animation */
+      object-fit: cover;
+      border: 2px solid rgba(94, 186, 170, 0.4);
+      flex-shrink: 0;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
     }
 
-    /* Bildanimationer */
-    @keyframes fadeScaleIn {
-      0% { 
-        opacity: 0; 
-        transform: scale(0.92) translateZ(0); 
-      }
-      100% { 
-        opacity: 1; 
-        transform: scale(1) translateZ(0); 
-      }
+    .game-content {
+      flex: 1;
+      min-width: 0;
     }
 
-    @keyframes spinIn {
-      0% { 
-        opacity: 0; 
-        transform: rotate(-3deg) scale(0.92) translateZ(0); 
-      }
-      100% { 
-        opacity: 1; 
-        transform: rotate(0deg) scale(1) translateZ(0); 
-      }
+    .game-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #5ebaaa;
+      margin-bottom: 0.3rem;
     }
 
-    .animate-fade-in { 
-      animation: fadeScaleIn 500ms cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; 
-    }
-    .animate-spin-in { 
-      animation: spinIn 600ms cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; 
-    }
-
-    /* Laddningsanimation - roterande disc */
-    @keyframes spin {
-      0% { transform: translate(-50%, -50%) rotate(0deg); }
-      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    .game-description {
+      font-size: 0.9rem;
+      color: #a0d4ca;
+      line-height: 1.5;
+      opacity: 0.9;
     }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 0.6; }
-      50% { opacity: 1; }
+    .game-meta {
+      font-size: 0.75rem;
+      color: #72c9bb;
+      margin-top: 0.5rem;
+      opacity: 0.7;
     }
 
-    .image-box.loading::before {
-      content: '🥏';
+    .coming-soon {
+      opacity: 0.5;
+      pointer-events: none;
+      border-color: rgba(74, 157, 142, 0.3);
+    }
+
+    .coming-soon-badge {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 4rem;
-      animation: spin 1s linear infinite, pulse 2s ease-in-out infinite;
-      z-index: 10;
+      top: 12px;
+      right: 12px;
+      background: #4a9d8e;
+      color: white;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: bold;
     }
 
-    /* Respekt för användare som föredrar mindre rörelse */
-    @media (prefers-reduced-motion: reduce) {
-      .animate-fade-in, .animate-spin-in { animation: none !important; }
-      .image-box.loading::before { animation: pulse 2s ease-in-out infinite; }
-    }
-
-    /* Responsivt för små mobiler */
-    @media (max-width: 480px) {
-      .text-box h2 {
-        font-size: 32px;
-        line-height: 1.3;
-        min-height: 2.6em;        /* två rader även i mobil */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
       }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
-      .image-box img {
-        max-width: 80vw;   /* max 80% av skärmens bredd */
-  max-height: 40vh;  /* max 40% av skärmens höjd */
-  width: auto;       /* behåll proportioner */
-  height: auto;      /* behåll proportioner */
-  object-fit: contain; /* skalas inom rutan utan att klippas */
+    .menu-container > * {
+      opacity: 0;
+    }
+
+    .menu-container > *:nth-child(1) { animation: fadeIn 0.4s 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+    .menu-container > *:nth-child(2) { animation: fadeIn 0.4s 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+    .menu-container > *:nth-child(3) { animation: fadeIn 0.4s 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+    .menu-container > *:nth-child(4) { animation: fadeIn 0.4s 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+    .menu-container > *:nth-child(5) { animation: fadeIn 0.4s 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+
+    @media (max-width: 480px) {
+      .title {
+        font-size: 1.8rem;
+      }
+      .subtitle {
+        font-size: 0.9rem;
+        margin-bottom: 2rem;
+      }
+      .game-card {
+        padding: 1.2rem;
+        gap: 1rem;
+      }
+      .game-thumbnail {
+        width: 70px;
+        height: 70px;
+      }
+      .game-title {
+        font-size: 1.3rem;
+      }
+      .game-description {
+        font-size: 0.85rem;
       }
     }
   </style>
 </head>
 <body>
-  <!-- Modul 3: Chat-bubbla -->
-  <div class="chat-container">
-    <div class="chat chat-start">
-      <div class="chat-bubble bg-teal-600 text-white text-lg font-bold min-h-[3rem] flex items-center justify-center text-center" id="challenge">
-        Tryck på knappen för att dra ett kort!
+  <div class="menu-container">
+    <h1 class="title">DISCGOLF CHALLENGE</h1>
+    <p class="subtitle">Välj spelläge</p>
+
+    <div class="game-card" onclick="window.location.href='/gambler.html'">
+      <img src="/images/slots/questionmark.jpeg" alt="Gambler" class="game-thumbnail">
+      <div class="game-content">
+        <h2 class="game-title">Gambler</h2>
+        <p class="game-description">
+          Slot machine challenge - Spin för random kast
+        </p>
+        <p class="game-meta">→ 5 bonusar = ACE-bonus</p>
       </div>
     </div>
-  </div>
 
-  <!-- Modul 2: Bild -->
-  <div class="image-box">
-    <div class="custom-stack">
-      <img id="cardImage" src="" alt="" class="rounded-2xl shadow-2xl" style="display: none;">
-      <img id="cardImage2" src="" alt="" class="rounded-2xl shadow-xl" style="display: none;">
+    <div class="game-card" onclick="window.location.href='/image-scrambler.html'">
+      <img src="/images/Misc/tee_backhand.jpeg" alt="Image Scrambler" class="game-thumbnail">
+      <div class="game-content">
+        <h2 class="game-title">Image Scrambler</h2>
+        <p class="game-description">
+          Slumpa din nästa utmaning med bildkort
+        </p>
+        <p class="game-meta">→ Tee • Approach • Putt</p>
+      </div>
     </div>
-  </div>
 
-  <!-- Modul 1: Knapp -->
-  <div class="flex flex-col items-center gap-3 p-4 bg-dark-900 pb-[calc(16px+env(safe-area-inset-bottom,0px))]">
-    <button 
-      class="px-8 py-5 bg-teal-500 text-white rounded-3xl text-lg font-medium hover:bg-teal-400 active:scale-95 transition-all shadow-xl cursor-pointer flex items-center justify-center w-11/12 max-w-md mx-auto"
-      onclick="drawCard()">
-      Dra slumpmässigt kort
-    </button>
-    <div class="flex justify-center items-stretch gap-2 w-11/12 max-w-md mx-auto">
-      <button class="flex-1 px-4 py-4 bg-teal-600 text-white rounded-2xl text-base font-medium hover:bg-teal-500 active:scale-95 transition-all shadow-lg cursor-pointer flex items-center justify-center whitespace-nowrap" onclick="drawCard('tee')">Dra utkast</button>
-      <button class="flex-1 px-4 py-4 bg-teal-600 text-white rounded-2xl text-base font-medium hover:bg-teal-500 active:scale-95 transition-all shadow-lg cursor-pointer flex items-center justify-center whitespace-nowrap" onclick="drawCard('inspel')">Dra inspel</button>
-      <button class="flex-1 px-4 py-4 bg-teal-600 text-white rounded-2xl text-base font-medium hover:bg-teal-500 active:scale-95 transition-all shadow-lg cursor-pointer flex items-center justify-center whitespace-nowrap" onclick="drawCard('putt')">Dra putt</button>
+    <div class="game-card coming-soon">
+      <div class="game-thumbnail" style="background: rgba(94, 186, 170, 0.2); display: flex; align-items: center; justify-content: center; font-size: 2rem;">⚙️</div>
+      <div class="game-content">
+        <h2 class="game-title">Settings</h2>
+        <p class="game-description">
+          Konfigurera reels och kategorier
+        </p>
+        <p class="game-meta">→ Coming soon</p>
+      </div>
+      <span class="coming-soon-badge">SNART</span>
     </div>
   </div>
 
   <script>
-    // Funktion för att pre-ladda en bild
-    function preloadImage(src) {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = reject;
-        img.src = src;
-      });
-    }
-
-    async function drawCard(category) {
-      try {
-        const url = category ? `/draw?category=${encodeURIComponent(category)}` : '/draw';
-        const res = await fetch(url);
-        const data = await res.json();
-
-        // Uppdatera text
-        document.getElementById("challenge").innerText = data.text;
-
-        // Stack-effekt: hämta båda bilderna
-        const img1 = document.getElementById("cardImage");
-        const img2 = document.getElementById("cardImage2");
-        const imageBox = document.querySelector('.image-box');
-
-        const file = data.file;
-        let folder = '';
-        if (file.startsWith('tee_')) folder = 'tee';
-        else if (file.startsWith('approach_')) folder = 'inspel';
-        else if (file.startsWith('putt_')) folder = 'putt';
-
-        const newImageSrc = `images/${folder}/${file}`;
-
-        // Visa laddningsanimation
-        imageBox.classList.add('loading');
-
-        // Pre-ladda den nya bilden
-        try {
-          await preloadImage(newImageSrc);
-        } catch (error) {
-          console.error("Kunde inte ladda bilden:", error);
-          imageBox.classList.remove('loading');
-          return;
-        }
-
-        // Ta bort laddningsanimation
-        imageBox.classList.remove('loading');
-        
-        // Rotera: den nuvarande bilden (img1) blir bakgrundsbilden (img2)
-        if (img1.src && img1.src.includes('images/')) {
-          // Flytta nuvarande bild till img2 (bakgrunden) - den stannar kvar
-          img2.src = img1.src;
-          img2.alt = img1.alt;
-          img2.style.display = 'block';
-          img2.style.opacity = '0.85';
-          img2.style.transform = 'translate(calc(-50% - 12px), calc(-50% - 12px)) scale(1)';
-        }
-
-        // Förbered den nya bilden att glida in framför den gamla
-        img1.style.transition = 'none'; // Inaktivera transitions temporärt
-        img1.classList.remove('animate-fade-in', 'animate-spin-in');
-        img1.style.display = 'block';
-        img1.style.opacity = '0';
-        img1.style.transform = 'translate(-50%, -50%) scale(0.92)';
-        img1.src = newImageSrc;
-        img1.alt = data.text;
-        
-        // Tvinga en reflow
-        void img1.offsetHeight;
-        
-        // Återaktivera transitions
-        img1.style.transition = '';
-
-        // Fade in den nya bilden smidigt - glider in framför den gamla
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            img1.style.opacity = '1';
-            img1.style.transform = 'translate(-50%, -50%) scale(1)';
-            img1.classList.add('animate-fade-in');
-          });
-        });
-
-        // Ta bort klass efter animation
-        setTimeout(() => {
-          img1.classList.remove('animate-fade-in');
-        }, 600);
-
-      } catch (error) {
-        console.error("Fel vid hämtning av kort:", error);
-      }
-    }
-
-    // Knapp-animation för alla knappar
-    const buttons = document.querySelectorAll('.drawBtn');
-    buttons.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        btn.style.transform = 'translateY(3px) scale(0.98)';
-        btn.style.boxShadow = '0 2px rgba(0,0,0,0.3)';
-        setTimeout(() => {
-          btn.style.transform = 'translateY(0) scale(1)';
-          btn.style.boxShadow = '0 4px rgba(0,0,0,0.3)';
-        }, 100);
-      });
-    });
-
-    // Service Worker Registrering (PWA)
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
@@ -356,22 +271,6 @@
           });
       });
     }
-
-    // PWA Install Prompt
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      
-      // Visa en diskret install-knapp (du kan lägga till en knapp här senare)
-      console.log('💾 PWA kan installeras!');
-    });
-
-    // Logga när appen installeras
-    window.addEventListener('appinstalled', () => {
-      console.log('🎉 PWA installerad på hemskärmen!');
-      deferredPrompt = null;
-    });
   </script>
 </body>
 </html>

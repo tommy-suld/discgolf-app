@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Scorecard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a1f1c;
+      color: white;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+    }
+    button {
+      padding: 15px 30px;
+      margin: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      background: #5ebaaa;
+      border: none;
+      border-radius: 8px;
+      color: #0a1f1c;
+      font-weight: bold;
+    }
+    button:hover {
+      background: #72c9bb;
+    }
+    .active {
+      background: #66ff66 !important;
+    }
+  </style>
+</head>
+<body>
+  <h1>Test Buttons - Scorecard</h1>
+  <p id="status">Click buttons to test</p>
+  
+  <div>
+    <h2>Antal hål:</h2>
+    <button class="hole-btn" data-holes="9" onclick="selectHoles(9)">9 hål</button>
+    <button class="hole-btn" data-holes="18" onclick="selectHoles(18)">18 hål</button>
+  </div>
+  
+  <div>
+    <h2>Navigation:</h2>
+    <button onclick="goToStep2()">Nästa →</button>
+  </div>
+
+  <script>
+    console.log('JavaScript loaded!');
+    
+    let gameState = {
+      holes: 9
+    };
+    
+    function selectHoles(count) {
+      console.log('selectHoles called with:', count);
+      document.getElementById('status').textContent = 'Selected: ' + count + ' holes';
+      
+      document.querySelectorAll('.hole-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelector(`[data-holes="${count}"]`).classList.add('active');
+      
+      gameState.holes = count;
+      alert('Selected ' + count + ' holes!');
+    }
+    
+    function goToStep2() {
+      console.log('goToStep2 called');
+      alert('Going to step 2! Holes: ' + gameState.holes);
+    }
+  </script>
+</body>
+</html>

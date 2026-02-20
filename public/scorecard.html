@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="sv" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Scorecard - Discgolf</title>
+  
+  <meta name="description" content="Håll koll på din score">
+  <meta name="theme-color" content="#5ebaaa">
+  
+  <!-- Force landscape orientation -->
+  <meta name="screen-orientation" content="landscape">
+  <meta name="x5-orientation" content="landscape">
+  <meta name="x5-fullscreen" content="true">
+  
+  <link rel="stylesheet" href="/output.css" />
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      background: #0a1f1c;
+      color: white;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Landscape orientation warning */
+    .orientation-warning {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #0a1f1c;
+      z-index: 9999;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .orientation-warning-icon {
+      font-size: 5rem;
+      margin-bottom: 2rem;
+      animation: rotate 2s infinite;
+    }
+
+    @keyframes rotate {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(90deg); }
+    }
+
+    .orientation-warning-text {
+      font-size: 1.5rem;
+      color: #5ebaaa;
+      line-height: 1.6;
+    }
+
+    @media (orientation: portrait) {
+      .orientation-warning {
+        display: flex;
+      }
+      .container {
+        display: none;
+      }
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('/images/forest-background.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      opacity: 0.1;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      margin: 0 auto;
+      padding: 0.5rem 1rem;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 0.5rem 0;
+      margin-bottom: 0.5rem;
+      position: relative;
+    }
+
+    /* Hide header on step 3 (scorecard) to prevent overlap with player columns */
+    body.step-3 .header {
+      display: none;
+    }
+
+    .header h1 {
+      font-size: 1.3rem;
+      color: #5ebaaa;
+    }
+
+    .back-btn {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #142e2a;
+      border: 2px solid #5ebaaa;
+      color: #5ebaaa;
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .back-btn:hover {
+      background: #5ebaaa;
+      color: #0a1f1c;
+    }
+
+    /* Step indicator */
+    .step-indicator {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      padding: 0.3rem 0;
+    }
+
+    .step-indicator.hidden {
+      display: none;
+    }
+
+    .step {
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      background: #142e2a;
+      border: 2px solid #2a4d47;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      transition: all 0.3s;
+      font-size: 0.9rem;
+    }
+
+    .step.active {
+      background: #5ebaaa;
+      border-color: #5ebaaa;
+      color: #0a1f1c;
+      transform: scale(1.1);
+    }
+
+    .step.completed {
+      background: #2a4d47;
+      border-color: #5ebaaa;
+      color: #5ebaaa;
+    }
+
+    /* Views */
+    .view {
+      display: none;
+      flex-direction: column;
+      gap: 1.5rem;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .view.active {
+      display: flex;
+    }
+
+    #step3View {
+      gap: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .setup-section {
+      background: rgba(20, 46, 42, 0.8);
+      border: 2px solid #2a4d47;
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+
+    .setup-section h2 {
+      font-size: 1.2rem;
+      color: #5ebaaa;
+      margin-bottom: 1rem;
+    }
+
+    /* Holes selector */
+    .holes-selector {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .hole-btn {
+      flex: 1;
+      padding: 0.75rem;
+      background: #142e2a;
+      border: 2px solid #2a4d47;
+      color: white;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .hole-btn.active {
+      background: #5ebaaa;
+      color: #0a1f1c;
+      border-color: #5ebaaa;
+      font-weight: bold;
+    }
+
+    .custom-holes {
+      display: none;
+      margin-top: 0.5rem;
+    }
+
+    .custom-holes.show {
+      display: block;
+    }
+
+    .custom-holes input {
+      width: 100%;
+      padding: 0.75rem;
+      background: #142e2a;
+      border: 2px solid #2a4d47;
+      color: white;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    /* Players */
+    .players-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .player-item {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .player-item input {
+      flex: 1;
+      padding: 0.75rem;
+      background: #142e2a;
+      border: 2px solid #2a4d47;
+      color: white;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    .remove-player-btn {
+      background: #ff4444;
+      border: none;
+      color: white;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.2s;
+    }
+
+    .remove-player-btn:hover {
+      background: #cc0000;
+    }
+
+    .add-player-btn {
+      width: 100%;
+      padding: 0.75rem;
+      background: #142e2a;
+      border: 2px dashed #5ebaaa;
+      color: #5ebaaa;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .add-player-btn:hover {
+      background: rgba(94, 186, 170, 0.1);
+    }
+
+    /* Navigation buttons */
+    .nav-buttons {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .nav-btn {
+      flex: 1;
+      padding: 1rem;
+      border: 2px solid #5ebaaa;
+      color: #5ebaaa;
+      background: #142e2a;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .nav-btn:hover:not(:disabled) {
+      background: #5ebaaa;
+      color: #0a1f1c;
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .nav-btn.primary {
+      background: #5ebaaa;
+      color: #0a1f1c;
+    }
+
+    .nav-btn.primary:hover {
+      background: #72c9bb;
+    }
+
+    /* Score View */
+    .hole-info-corner {
+      position: fixed;
+      top: 10px;
+      right: 15px;
+      background: rgba(20, 46, 42, 0.9);
+      border: 2px solid #2a4d47;
+      border-radius: 8px;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.85rem;
+      color: #5ebaaa;
+      font-weight: bold;
+      z-index: 100;
+      display: none; /* Hidden by default */
+    }
+
+    .hole-info-corner.visible {
+      display: block;
+    }
+
+    .reset-btn-corner {
+      position: fixed;
+      top: 10px;
+      right: 100px; /* To the left of hole info */
+      background: rgba(255, 102, 102, 0.2);
+      border: 2px solid #ff6666;
+      color: #ff6666;
+      border-radius: 8px;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.75rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+      z-index: 100;
+      display: none; /* Hidden by default */
+    }
+
+    .reset-btn-corner.visible {
+      display: block;
+    }
+
+    .reset-btn-corner:hover {
+      background: #ff6666;
+      color: #0a1f1c;
+    }
+
+    .hole-nav-btn {
+      position: fixed;
+      bottom: 8px;
+      background: #142e2a;
+      border: 2px solid #5ebaaa;
+      color: #5ebaaa;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      z-index: 100;
+      display: none; /* Hidden by default */
+    }
+
+    .hole-nav-btn.visible {
+      display: block;
+    }
+
+    .hole-nav-btn.prev {
+      left: 15px;
+    }
+
+    .hole-nav-btn.next {
+      right: 15px;
+    }
+
+    .hole-nav-btn:hover:not(:disabled) {
+      background: #5ebaaa;
+      color: #0a1f1c;
+    }
+
+    .hole-nav-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    /* ========================================
+       PLAYER COLUMNS - CLEAN RESTART
+       ======================================== */
+    
+    .players-grid {
+      display: flex;
+      gap: 10px;
+      flex: 1;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 10px;
+      padding-top: 50px;
+      align-items: stretch;
+    }
+
+    .player-column {
+      flex: 1;
+      min-width: 140px;
+      max-width: 250px;
+      max-height: 65vh;
+      background: rgba(20, 46, 42, 0.9);
+      border: 2px solid #4a9d8e;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* PLAYER NAME - ALWAYS VISIBLE */
+    .player-column-header {
+      background: #5ebaaa;
+      color: #0a1f1c;
+      font-size: 1rem;
+      font-weight: bold;
+      text-align: center;
+      padding: 8px;
+      flex-shrink: 0;
+    }
+
+    /* PICKER SECTION - TAKES REMAINING SPACE */
+    .player-column-picker {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      background: rgba(10, 31, 28, 0.5);
+    }
+
+    /* PICKER CONTAINER */
+    .column-picker-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* SCROLLABLE OPTIONS */
+    .column-picker-scroll {
+      height: 100%;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      -webkit-overflow-scrolling: touch;
+      padding: 60px 0;
+      scrollbar-width: none;
+    }
+
+    .column-picker-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* EACH OPTION */
+    .column-picker-option {
+      height: 35px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      scroll-snap-align: center;
+      font-size: 1.2rem;
+      color: rgba(114, 201, 187, 0.4);
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .column-picker-option.selected {
+      color: #5ebaaa;
+      font-size: 1.6rem;
+      font-weight: bold;
+    }
+
+    /* SELECTION HIGHLIGHT */
+    .column-picker-highlight {
+      position: absolute;
+      left: 15%;
+      right: 15%;
+      top: 50%;
+      transform: translateY(-50%);
+      height: 50px;
+      border: 2px solid rgba(94, 186, 170, 0.6);
+      border-radius: 10px;
+      background: rgba(94, 186, 170, 0.08);
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* FADE MASKS */
+    .column-picker-mask-top,
+    .column-picker-mask-bottom {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 80px;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .column-picker-mask-top {
+      top: 0;
+      background: linear-gradient(to bottom, rgba(10, 31, 28, 1) 0%, transparent 100%);
+    }
+
+    .column-picker-mask-bottom {
+      bottom: 0;
+      background: linear-gradient(to top, rgba(10, 31, 28, 1) 0%, transparent 100%);
+    }
+
+    /* TOTAL SECTION */
+    .player-column-total {
+      text-align: center;
+      padding: 8px;
+      background: rgba(94, 186, 170, 0.15);
+      border-top: 2px solid #5ebaaa;
+      font-size: 0.95rem;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    /* Color classes for total score */
+    .player-column-total.positive {
+      color: #ff6666;
+    }
+
+    .player-column-total.negative {
+      color: #66ff66;
+    }
+
+    .player-column-total.even {
+      color: #5ebaaa;
+    }
+
+    /* Picker Modal */
+    .picker-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .picker-modal.active {
+      display: flex;
+    }
+
+    .picker-content {
+      background: #0a1f1c;
+      border: 3px solid #5ebaaa;
+      border-radius: 20px;
+      padding: 1.5rem;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 10px 40px rgba(94, 186, 170, 0.5);
+    }
+
+    .picker-header {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .picker-title {
+      font-size: 1.3rem;
+      color: #5ebaaa;
+      font-weight: bold;
+      margin-bottom: 0.25rem;
+    }
+
+    .picker-subtitle {
+      font-size: 0.9rem;
+      color: #72c9bb;
+    }
+
+    /* iOS-style Picker */
+    .picker-container {
+      position: relative;
+      height: 200px;
+      overflow: hidden;
+      background: rgba(20, 46, 42, 0.5);
+      border-radius: 12px;
+      border: 2px solid #2a4d47;
+      margin-bottom: 1rem;
+    }
+
+    .picker-highlight {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 50px;
+      transform: translateY(-50%);
+      background: rgba(94, 186, 170, 0.15);
+      border-top: 2px solid #5ebaaa;
+      border-bottom: 2px solid #5ebaaa;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .picker-mask-top,
+    .picker-mask-bottom {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 75px;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .picker-mask-top {
+      top: 0;
+      background: linear-gradient(to bottom, 
+        rgba(10, 31, 28, 1) 0%,
+        rgba(10, 31, 28, 0.8) 50%,
+        rgba(10, 31, 28, 0) 100%);
+    }
+
+    .picker-mask-bottom {
+      bottom: 0;
+      background: linear-gradient(to top, 
+        rgba(10, 31, 28, 1) 0%,
+        rgba(10, 31, 28, 0.8) 50%,
+        rgba(10, 31, 28, 0) 100%);
+    }
+
+    .picker-scroll {
+      height: 100%;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding: 75px 0;
+    }
+
+    .picker-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .picker-option {
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      scroll-snap-align: center;
+      font-size: 1.1rem;
+      transition: all 0.2s;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .picker-option.selected {
+      color: white;
+      font-weight: bold;
+      font-size: 1.3rem;
+    }
+
+    .score-name {
+      font-weight: 600;
+    }
+
+    .score-value {
+      margin-left: 0.5rem;
+      color: #5ebaaa;
+    }
+
+    .score-value.under-par {
+      color: #66ff66;
+    }
+
+    .score-value.over-par {
+      color: #ff6666;
+    }
+
+    .picker-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .picker-btn {
+      flex: 1;
+      padding: 0.75rem;
+      border: 2px solid #5ebaaa;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #142e2a;
+      color: #5ebaaa;
+    }
+
+    .picker-btn.primary {
+      background: #5ebaaa;
+      color: #0a1f1c;
+    }
+
+    .picker-btn:hover {
+      transform: scale(1.02);
+    }
+
+    /* Summary bar removed - totals shown in each column */
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 0.5rem;
+      }
+
+      .header h1 {
+        font-size: 1.2rem;
+      }
+
+      .players-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Landscape orientation warning -->
+    <div class="orientation-warning">
+      <div class="orientation-warning-icon">📱→🔄</div>
+      <div class="orientation-warning-text">
+        <strong>Vrid telefonen till liggande läge</strong><br>
+        för att använda Scorecard!
+      </div>
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+      <button class="back-btn" onclick="goBack()">← Tillbaka till spel</button>
+      <h1>Scorecard</h1>
+    </div>
+
+    <!-- Step Indicator -->
+    <div class="step-indicator" id="stepIndicator">
+      <div class="step active" data-step="1">1</div>
+      <div class="step" data-step="2">2</div>
+      <div class="step" data-step="3">3</div>
+    </div>
+
+    <!-- Step 1: Antal hål -->
+    <div class="view active" id="step1View">
+      <div class="setup-section">
+        <h2>Antal hål</h2>
+        <div class="holes-selector">
+          <button class="hole-btn active" data-holes="9" onclick="selectHoles(9)">9 hål</button>
+          <button class="hole-btn" data-holes="18" onclick="selectHoles(18)">18 hål</button>
+          <button class="hole-btn" data-holes="custom" onclick="selectHoles('custom')">Anpassat</button>
+        </div>
+        <div class="custom-holes" id="customHoles">
+          <input type="number" id="customHolesInput" min="1" max="36" placeholder="Ange antal hål (1-36)" />
+        </div>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="nav-btn primary" onclick="goToStep2()">Nästa →</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Spelare -->
+    <div class="view" id="step2View">
+      <div class="setup-section">
+        <h2>Spelare</h2>
+        <div class="players-list" id="playersList">
+          <div class="player-item">
+            <input type="text" placeholder="Spelarnamn" maxlength="15" class="player-input" />
+            <button class="remove-player-btn" onclick="removePlayer(this)" style="display: none;">✕</button>
+          </div>
+        </div>
+        <button class="add-player-btn" onclick="addPlayer()">+ Lägg till spelare</button>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="nav-btn primary" onclick="startScorecard()">Skapa scorecard →</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Scorecard -->
+    <div class="view" id="step3View">
+      <!-- Reset button in top right corner (left of hole info) -->
+      <button class="reset-btn-corner" id="resetBtnCorner" onclick="resetRound()">Börja om</button>
+      
+      <!-- Hole info in top right corner -->
+      <div class="hole-info-corner" id="holeInfoCorner">
+        Hål <span id="currentHoleNum">1</span>/<span id="totalHoles">18</span>
+      </div>
+
+      <!-- Players Grid -->
+      <div class="players-grid" id="playersGrid">
+        <!-- Dynamic player cards will be inserted here -->
+      </div>
+    </div>
+
+    <!-- Fixed navigation buttons in corners -->
+    <button class="hole-nav-btn prev" onclick="goBack()" id="backToGameBtn" style="right: auto; left: 15px;">Tillbaka till spel</button>
+    <button class="hole-nav-btn prev" onclick="previousHole()" id="prevHoleBtn" style="left: 155px;">← Föreg.</button>
+    <button class="hole-nav-btn next" onclick="nextHole()" id="nextHoleBtn">Nästa hål →</button>
+  </div>
+
+  <!-- Picker Modal (OLD - NOT USED) -->
+  <div class="picker-modal" id="pickerModal" style="display: none !important;">
+    <div class="picker-content">
+      <div class="picker-header">
+        <div class="picker-title" id="pickerPlayerName">Spelare</div>
+        <div class="picker-subtitle" id="pickerHoleInfo">Hål 1 - Par 3</div>
+      </div>
+
+      <div class="picker-container">
+        <div class="picker-mask-top"></div>
+        <div class="picker-highlight"></div>
+        <div class="picker-scroll" id="pickerScroll"></div>
+        <div class="picker-mask-bottom"></div>
+      </div>
+
+      <div class="picker-buttons">
+        <button class="picker-btn" onclick="closePicker()">Avbryt</button>
+        <button class="picker-btn primary" onclick="savePickerScore()">Spara</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Game state with localStorage persistence
+    let gameState = {
+      players: [],
+      holes: 9,
+      currentHole: 1,
+      scores: {}, // { hole: { playerName: score } }
+      pars: [], // Default par 3 for all holes
+      currentStep: 1
+    };
+
+    const scoreOptions = [];
+    // Generate score options from -3 to +30
+    for (let i = -3; i <= 30; i++) {
+      scoreOptions.push({ value: i });
+    }
+
+    let currentPickerPlayer = null;
+
+    // Load saved state from localStorage
+    function loadState() {
+      const saved = localStorage.getItem('scorecardState');
+      if (saved) {
+        try {
+          gameState = JSON.parse(saved);
+          // If we have a saved game, jump to scorecard (step 3)
+          if (gameState.currentStep === 3 && gameState.players.length > 0) {
+            showStep(3);
+            renderPlayersGrid();
+            updateHoleNav();
+          } else if (gameState.currentStep === 2) {
+            showStep(2);
+          }
+        } catch (e) {
+          console.error('Failed to load saved state:', e);
+        }
+      }
+    }
+
+    // Save state to localStorage
+    function saveState() {
+      localStorage.setItem('scorecardState', JSON.stringify(gameState));
+    }
+
+    // Step navigation
+    function showStep(stepNum) {
+      // Hide all views
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      
+      // Show target view
+      document.getElementById(`step${stepNum}View`).classList.add('active');
+      
+      // Update step indicator - hide on step 3 (scorecard)
+      const stepIndicator = document.getElementById('stepIndicator');
+      if (stepNum === 3) {
+        stepIndicator.classList.add('hidden');
+        document.body.classList.add('step-3'); // Hide header on step 3
+      } else {
+        stepIndicator.classList.remove('hidden');
+        document.body.classList.remove('step-3'); // Show header on other steps
+        // Update step indicator
+        document.querySelectorAll('.step').forEach(step => {
+          const num = parseInt(step.dataset.step);
+          step.classList.remove('active', 'completed');
+          if (num === stepNum) {
+            step.classList.add('active');
+          } else if (num < stepNum) {
+            step.classList.add('completed');
+          }
+        });
+      }
+      
+      // Show/hide navigation buttons and hole info (only on step 3 - scorecard)
+      const navButtons = document.querySelectorAll('.hole-nav-btn');
+      const holeInfo = document.getElementById('holeInfoCorner');
+      const resetBtn = document.getElementById('resetBtnCorner');
+      if (stepNum === 3) {
+        navButtons.forEach(btn => btn.classList.add('visible'));
+        if (holeInfo) holeInfo.classList.add('visible');
+        if (resetBtn) resetBtn.classList.add('visible');
+        updateHoleNav();
+      } else {
+        navButtons.forEach(btn => btn.classList.remove('visible'));
+        if (holeInfo) holeInfo.classList.remove('visible');
+        if (resetBtn) resetBtn.classList.remove('visible');
+      }
+      
+      gameState.currentStep = stepNum;
+      saveState();
+    }
+
+    function goToStep2() {
+      showStep(2);
+    }
+
+    function nextStep(stepNum) {
+      showStep(stepNum);
+    }
+
+    function prevStep(stepNum) {
+      showStep(stepNum);
+    }
+
+    // Holes selection
+    function selectHoles(count) {
+      document.querySelectorAll('.hole-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelector(`[data-holes="${count}"]`).classList.add('active');
+      
+      const customDiv = document.getElementById('customHoles');
+      if (count === 'custom') {
+        customDiv.classList.add('show');
+        const customValue = parseInt(document.getElementById('customHolesInput').value);
+        gameState.holes = customValue || 9;
+      } else {
+        customDiv.classList.remove('show');
+        gameState.holes = count;
+      }
+      
+      // Initialize pars (default 3)
+      gameState.pars = Array(gameState.holes).fill(3);
+      saveState();
+    }
+
+    // Player management
+    function addPlayer() {
+      const playersList = document.getElementById('playersList');
+      const playerCount = playersList.querySelectorAll('.player-item').length;
+      
+      if (playerCount >= 8) {
+        alert('Max 8 spelare');
+        return;
+      }
+      
+      const playerItem = document.createElement('div');
+      playerItem.className = 'player-item';
+      playerItem.innerHTML = `
+        <input type="text" placeholder="Spelarnamn" maxlength="15" class="player-input" />
+        <button class="remove-player-btn" onclick="removePlayer(this)">✕</button>
+      `;
+      playersList.appendChild(playerItem);
+      
+      updateRemoveButtons();
+    }
+
+    function removePlayer(btn) {
+      btn.parentElement.remove();
+      updateRemoveButtons();
+    }
+
+    function updateRemoveButtons() {
+      const items = document.querySelectorAll('.player-item');
+      items.forEach((item, index) => {
+        const removeBtn = item.querySelector('.remove-player-btn');
+        removeBtn.style.display = items.length > 1 ? 'block' : 'none';
+      });
+    }
+
+    // Start scorecard
+    function startScorecard() {
+      // Get players
+      const playerInputs = document.querySelectorAll('.player-input');
+      gameState.players = Array.from(playerInputs)
+        .map(input => input.value.trim())
+        .filter(name => name.length > 0);
+      
+      if (gameState.players.length === 0) {
+        alert('Lägg till minst en spelare');
+        return;
+      }
+
+      // Initialize scores
+      gameState.scores = {};
+      for (let i = 1; i <= gameState.holes; i++) {
+        gameState.scores[i] = {};
+        gameState.players.forEach(player => {
+          gameState.scores[i][player] = null;
+        });
+      }
+
+      gameState.currentHole = 1;
+      saveState();
+
+      showStep(3); // Show scorecard
+      renderPlayersGrid();
+      updateHoleNav();
+    }
+
+    // Render player columns with iOS-style pickers
+    function renderPlayersGrid() {
+      const grid = document.getElementById('playersGrid');
+      grid.innerHTML = '';
+
+      gameState.players.forEach(player => {
+        const column = document.createElement('div');
+        column.className = 'player-column';
+
+        // Header with player name
+        const header = document.createElement('div');
+        header.className = 'player-column-header';
+        header.textContent = player;
+        column.appendChild(header);
+
+        // Picker container
+        const pickerSection = document.createElement('div');
+        pickerSection.className = 'player-column-picker';
+
+        const pickerContainer = document.createElement('div');
+        pickerContainer.className = 'column-picker-container';
+
+        // Scroll container FIRST (underneath overlays)
+        const scroll = document.createElement('div');
+        scroll.className = 'column-picker-scroll';
+        
+        let currentScore = gameState.scores[gameState.currentHole][player];
+        
+        // If no score yet, default to 0 and save it
+        if (currentScore === null || currentScore === undefined) {
+          currentScore = 0;
+          gameState.scores[gameState.currentHole][player] = 0;
+          saveState();
+        }
+        
+        // Populate options with simple numbers
+        scoreOptions.forEach((option) => {
+          const optionDiv = document.createElement('div');
+          optionDiv.className = 'column-picker-option';
+          optionDiv.dataset.value = option.value;
+          optionDiv.dataset.player = player;
+          
+          // Format display: show + for positive, nothing for negative, 0 for zero
+          let displayText = option.value.toString();
+          if (option.value > 0) {
+            displayText = '+' + option.value;
+          }
+          optionDiv.textContent = displayText;
+          
+          scroll.appendChild(optionDiv);
+        });
+
+        pickerContainer.appendChild(scroll);
+
+        // Gradient masks ON TOP (after scroll)
+        const maskTop = document.createElement('div');
+        maskTop.className = 'column-picker-mask-top';
+        pickerContainer.appendChild(maskTop);
+
+        const maskBottom = document.createElement('div');
+        maskBottom.className = 'column-picker-mask-bottom';
+        pickerContainer.appendChild(maskBottom);
+
+        // Highlight bar ON TOP (after scroll)
+        const highlight = document.createElement('div');
+        highlight.className = 'column-picker-highlight';
+        pickerContainer.appendChild(highlight);
+        pickerSection.appendChild(pickerContainer);
+        column.appendChild(pickerSection);
+
+        // Total score with color
+        const total = calculatePlayerTotal(player);
+        const totalClass = total === 0 ? 'even' : total > 0 ? 'positive' : 'negative';
+        const totalDisplay = total === 0 ? '0' : (total > 0 ? `+${total}` : total);
+        const totalDiv = document.createElement('div');
+        totalDiv.className = `player-column-total ${totalClass}`;
+        totalDiv.textContent = `Total: ${totalDisplay}`;
+        column.appendChild(totalDiv);
+
+        grid.appendChild(column);
+
+        // Set initial scroll position after DOM is ready
+        setTimeout(() => {
+          // currentScore is guaranteed to be set (0 if new hole)
+          const targetIndex = scoreOptions.findIndex(o => o.value === currentScore);
+          
+          if (targetIndex !== -1) {
+            const targetOption = scroll.children[targetIndex];
+            if (targetOption) {
+              targetOption.scrollIntoView({ block: 'center', behavior: 'instant' });
+              targetOption.classList.add('selected');
+            }
+          }
+
+          // Use debounced scroll event for better performance
+          // Only save when user stops scrolling for 150ms
+          let scrollTimeout;
+          scroll.addEventListener('scroll', () => {
+            // Debounce: only update after scrolling stops
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+              updatePickerSelection(scroll, player);
+            }, 150);
+          });
+        }, 150); // Increased from 50ms to ensure DOM is fully ready
+      });
+    }
+
+    function updatePickerSelection(scroll, player) {
+      const container = scroll.parentElement;
+      const containerRect = container.getBoundingClientRect();
+      const centerY = containerRect.top + containerRect.height / 2;
+      
+      let closestOption = null;
+      let closestDistance = Infinity;
+      
+      Array.from(scroll.children).forEach(option => {
+        option.classList.remove('selected');
+        const optionRect = option.getBoundingClientRect();
+        const optionCenterY = optionRect.top + optionRect.height / 2;
+        const distance = Math.abs(centerY - optionCenterY);
+        
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestOption = option;
+        }
+      });
+      
+      if (closestOption) {
+        closestOption.classList.add('selected');
+        
+        // Auto-save score when selection changes
+        const value = parseInt(closestOption.dataset.value);
+        gameState.scores[gameState.currentHole][player] = value;
+        saveState();
+        
+        // Update the total display for this player
+        updatePlayerTotal(player);
+      }
+    }
+
+    // Update a single player's total display
+    function updatePlayerTotal(player) {
+      const total = calculatePlayerTotal(player);
+      const totalClass = total === 0 ? 'even' : total > 0 ? 'positive' : 'negative';
+      const totalDisplay = total === 0 ? '0' : (total > 0 ? `+${total}` : total);
+      
+      // Find this player's column and update total
+      const columns = document.querySelectorAll('.player-column');
+      columns.forEach(column => {
+        const header = column.querySelector('.player-column-header');
+        if (header && header.textContent === player) {
+          const totalDiv = column.querySelector('.player-column-total');
+          if (totalDiv) {
+            totalDiv.textContent = `Total: ${totalDisplay}`;
+            totalDiv.className = `player-column-total ${totalClass}`;
+          }
+        }
+      });
+    }
+
+    /* OLD PICKER MODAL FUNCTIONS - NOT USED WITH COLUMN DESIGN
+    // Open picker for player
+    function openPicker(player) {
+      currentPickerPlayer = player;
+      const modal = document.getElementById('pickerModal');
+      const scroll = document.getElementById('pickerScroll');
+      
+      // Update header
+      document.getElementById('pickerPlayerName').textContent = player;
+      const currentPar = gameState.pars[gameState.currentHole - 1] || 3;
+      document.getElementById('pickerHoleInfo').textContent = `Hål ${gameState.currentHole} - Par ${currentPar}`;
+      
+      // Populate options
+      scroll.innerHTML = '';
+      scoreOptions.forEach((option) => {
+        let actualValue;
+        if (option.value !== null) {
+          actualValue = option.value;
+        } else {
+          actualValue = currentPar + option.relative;
+        }
+
+        const optionDiv = document.createElement('div');
+        optionDiv.className = 'picker-option';
+        optionDiv.dataset.value = actualValue;
+        optionDiv.innerHTML = `
+          <span class="score-name">${option.name}</span>
+          <span class="score-value ${option.relative && option.relative < 0 ? 'under-par' : option.relative && option.relative > 0 ? 'over-par' : ''}">${actualValue}</span>
+        `;
+        scroll.appendChild(optionDiv);
+      });
+
+      // Set initial position
+      const currentScore = gameState.scores[gameState.currentHole][player];
+      const defaultIndex = scoreOptions.findIndex(o => o.name === 'Par');
+      const defaultOption = scroll.children[defaultIndex];
+      
+      setTimeout(() => {
+        if (currentScore !== null) {
+          const savedOption = Array.from(scroll.children).find(
+            opt => parseInt(opt.dataset.value) === currentScore
+          );
+          if (savedOption) {
+            savedOption.scrollIntoView({ block: 'center' });
+          } else {
+            defaultOption.scrollIntoView({ block: 'center' });
+          }
+        } else {
+          defaultOption.scrollIntoView({ block: 'center' });
+        }
+        updatePickerSelection();
+      }, 100);
+
+      // Add scroll listener
+      let scrollTimeout;
+      scroll.addEventListener('scroll', () => {
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(() => {
+          updatePickerSelection();
+        }, 100);
+      });
+
+      modal.classList.add('active');
+    }
+
+    function updatePickerSelection() {
+      const scroll = document.getElementById('pickerScroll');
+      const options = scroll.querySelectorAll('.picker-option');
+      const containerRect = scroll.getBoundingClientRect();
+      const centerY = containerRect.top + containerRect.height / 2;
+
+      let closestOption = null;
+      let closestDistance = Infinity;
+
+      options.forEach(option => {
+        const rect = option.getBoundingClientRect();
+        const optionCenterY = rect.top + rect.height / 2;
+        const distance = Math.abs(centerY - optionCenterY);
+
+        option.classList.remove('selected');
+
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestOption = option;
+        }
+      });
+
+      if (closestOption) {
+        closestOption.classList.add('selected');
+      }
+    }
+
+    function closePicker() {
+      document.getElementById('pickerModal').classList.remove('active');
+      currentPickerPlayer = null;
+    }
+
+    function savePickerScore() {
+      const scroll = document.getElementById('pickerScroll');
+      const selected = scroll.querySelector('.picker-option.selected');
+      
+      if (selected && currentPickerPlayer) {
+        const score = parseInt(selected.dataset.value);
+        gameState.scores[gameState.currentHole][currentPickerPlayer] = score;
+        saveState();
+        renderPlayersGrid();
+        updateSummary();
+      }
+      
+      closePicker();
+    }
+    END OF OLD PICKER FUNCTIONS */
+
+    // Calculate totals
+    function calculatePlayerTotal(player) {
+      let total = 0;
+      for (let hole = 1; hole <= gameState.currentHole; hole++) {
+        const score = gameState.scores[hole][player];
+        if (score !== null) {
+          total += score;
+        }
+      }
+      return total;
+    }
+
+    function calculatePlayerTotalStrokes(player) {
+      // Same as calculatePlayerTotal since we're using absolute values
+      return calculatePlayerTotal(player);
+    }
+
+    // Hole navigation
+    function updateHoleNav() {
+      document.getElementById('currentHoleNum').textContent = gameState.currentHole;
+      document.getElementById('totalHoles').textContent = gameState.holes;
+
+      document.getElementById('prevHoleBtn').disabled = gameState.currentHole === 1;
+      document.getElementById('nextHoleBtn').disabled = gameState.currentHole === gameState.holes;
+    }
+
+    function previousHole() {
+      if (gameState.currentHole > 1) {
+        gameState.currentHole--;
+        saveState();
+        renderPlayersGrid();
+        updateHoleNav();
+      }
+    }
+
+    function nextHole() {
+      if (gameState.currentHole < gameState.holes) {
+        gameState.currentHole++;
+        saveState();
+        renderPlayersGrid();
+        updateHoleNav();
+      }
+    }
+
+    // Summary
+    // Summary removed - totals shown in each column
+
+    // Reset and finish
+    function resetRound() {
+      if (confirm('Är du säker på att du vill börja om? All data försvinner.')) {
+        localStorage.removeItem('scorecardState');
+        location.reload();
+      }
+    }
+
+    function goBack() {
+      // Save state before going back
+      saveState();
+      window.location.href = '/gambler.html';
+    }
+
+    // Initialize
+    document.getElementById('customHolesInput').addEventListener('input', (e) => {
+      if (document.querySelector('[data-holes="custom"]').classList.contains('active')) {
+        gameState.holes = parseInt(e.target.value) || 9;
+        gameState.pars = Array(gameState.holes).fill(3);
+        saveState();
+      }
+    });
+
+    // Handle orientation change - re-render scorecard to fix layout
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => {
+        if (gameState.currentStep === 3) {
+          renderPlayersGrid();
+        }
+      }, 100); // Small delay to allow orientation to settle
+    });
+
+    // Also handle window resize (for desktop testing)
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        if (gameState.currentStep === 3) {
+          renderPlayersGrid();
+        }
+      }, 100);
+    });
+
+    // Load saved state on page load
+    loadState();
+  </script>
+</body>
+</html>

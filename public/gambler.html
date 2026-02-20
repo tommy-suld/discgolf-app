@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="sv" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Gambler - Discgolf Challenge</title>
+  
+  <meta name="description" content="Gambla ditt nästa kast!">
+  <meta name="theme-color" content="#5ebaaa">
+  
+  <!-- Force landscape orientation -->
+  <meta name="screen-orientation" content="landscape">
+  <meta name="x5-orientation" content="landscape">
+  <meta name="x5-fullscreen" content="true">
+  
+  <!-- Preload critical images FIRST - before any other resources -->
+  <link rel="preload" as="image" href="images/slots/questionmark.jpeg">
+  
+  <link rel="stylesheet" href="/output.css" />
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0a1f1c;
+      color: white;
+      margin: 0;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      padding: 0;
+    }
+
+    /* Landscape orientation warning */
+    .orientation-warning {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #0a1f1c;
+      z-index: 9999;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .orientation-warning-icon {
+      font-size: 5rem;
+      margin-bottom: 2rem;
+      animation: rotate 2s infinite;
+    }
+
+    @keyframes rotate {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(90deg); }
+    }
+
+    .orientation-warning-text {
+      font-size: 1.5rem;
+      color: #5ebaaa;
+      line-height: 1.6;
+    }
+
+    @media (orientation: portrait) {
+      .orientation-warning {
+        display: flex;
+      }
+      .game-container {
+        display: none;
+      }
+      .back-btn {
+        display: none;
+      }
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('/images/forest-background.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      opacity: 0.1;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    body > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .game-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    .slot-machine {
+      background: linear-gradient(135deg, #142e2a 0%, #0a1f1c 100%);
+      border: 3px solid #5ebaaa;
+      border-radius: 15px;
+      padding: 0.25rem 0.75rem; /* Minimal top/bottom padding to maximize slot height */
+      box-shadow: 0 8px 30px rgba(94, 186, 170, 0.3);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 0;
+      margin: 5px; /* Minimal margin */
+      margin-bottom: 65px; /* Reduced bottom margin */
+      max-height: calc(100vh - 70px); /* Use even more height */
+      width: 100%;
+    }
+
+    /* Challenge popup - displayed above reels on row 1 */
+    .challenge-popup {
+      position: fixed;
+      top: 20%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(20, 46, 42, 0.95);
+      border: 3px solid #5ebaaa;
+      border-radius: 15px;
+      padding: 1.2rem 1.5rem;
+      text-align: center;
+      z-index: 200;
+      box-shadow: 0 8px 30px rgba(94, 186, 170, 0.5);
+      max-width: 90%;
+      min-width: fit-content; /* Width adapts to content */
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease-in-out, background 0.3s ease-in-out, border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    }
+
+    .challenge-popup.gold {
+      background: rgba(255, 215, 0, 0.95) !important;
+      border-color: #ffd700 !important;
+      box-shadow: 0 8px 30px rgba(255, 215, 0, 0.7) !important;
+    }
+
+    .challenge-popup.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .challenge-title {
+      font-size: 0.9rem;
+      color: #5ebaaa;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: color 0.3s ease-in-out;
+    }
+
+    .challenge-title.gold {
+      color: #0a1f1c !important;
+    }
+
+    .challenge-text {
+      font-size: 1rem;
+      color: white;
+      line-height: 1.5;
+      font-weight: 500;
+      transition: color 0.3s ease-in-out;
+    }
+
+    .challenge-text.gold {
+      color: #0a1f1c !important;
+    }
+
+    .back-btn {
+      position: fixed;
+      bottom: 8px;
+      left: 15px;
+      background: #142e2a;
+      border: 2px solid #5ebaaa;
+      color: #5ebaaa;
+      padding: 8px; /* Reduced padding */
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 1.1rem; /* Reduced font size */
+      font-weight: bold;
+      transition: all 0.3s;
+      z-index: 100;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      min-width: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .back-btn:hover {
+      background: #5ebaaa;
+      color: #0a1f1c;
+      transform: scale(1.05);
+    }
+
+    .back-btn:active {
+      transform: scale(0.95);
+    }
+
+    .scorecard-btn {
+      position: fixed;
+      bottom: 8px;
+      right: 115px; /* Aligned with SPIN button */
+      background: #142e2a;
+      border: 2px solid #5ebaaa;
+      color: #5ebaaa;
+      padding: 8px 16px; /* Match SPIN button padding */
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      font-weight: bold;
+      transition: all 0.3s;
+      z-index: 100;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .scorecard-btn:hover {
+      background: #5ebaaa;
+      color: #0a1f1c;
+      transform: scale(1.05);
+    }
+
+    .scorecard-btn:active {
+      transform: scale(0.95);
+    }
+
+    .bonus-count {
+      position: fixed;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: transparent;
+      border: none;
+      padding: 0;
+      text-align: center;
+      font-size: 0.8rem;
+      color: #ffd700;
+      font-weight: bold;
+      z-index: 100;
+    }
+
+    .reels-container {
+      display: flex;
+      gap: 6px;
+      justify-content: space-between;
+      flex-wrap: nowrap;
+      overflow: hidden;
+      width: 100%;
+      flex: 1;
+    }
+
+    .reel {
+      background: #0a1f1c;
+      border: 2px solid #4a9d8e;
+      border-radius: 10px;
+      padding: 0.3rem 0.3rem; /* Reduced vertical padding */
+      flex: 1;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.3s ease;
+    }
+
+    .reel.locked {
+      opacity: 0.3;
+      border-color: #2a4d47;
+    }
+
+    .reel.active {
+      border-color: #5ebaaa;
+      box-shadow: 0 0 20px rgba(94, 186, 170, 0.5);
+      background: rgba(94, 186, 170, 0.15);
+    }
+
+    .reel.unlocked {
+      border-color: #ffd700;
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+      animation: unlockGlow 1s ease-in-out;
+    }
+
+    .reel.bonus-flash {
+      animation: bonusFlash 0.8s ease-in-out;
+    }
+
+    @keyframes unlockGlow {
+      0%, 100% { 
+        border-color: #ffd700;
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+      }
+      50% { 
+        border-color: #ffed4e;
+        box-shadow: 0 0 30px rgba(255, 215, 0, 1);
+      }
+    }
+
+    @keyframes bonusFlash {
+      0%, 100% { 
+        border-color: inherit;
+        box-shadow: none;
+      }
+      50% { 
+        border-color: #ffd700;
+        box-shadow: 0 0 25px rgba(255, 215, 0, 0.9);
+      }
+    }
+
+    /* Unique colors for each reel - 80% transparent */
+    #reel1 {
+      border-color: rgba(0, 212, 255, 0.2);
+    }
+    #reel1.active {
+      border-color: rgba(0, 212, 255, 0.2);
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+    }
+    #reel1 .reel-label {
+      color: rgba(179, 102, 255, 0.9);
+      border-bottom-color: rgba(179, 102, 255, 0.3);
+    }
+
+    #reel2 {
+      border-color: rgba(179, 102, 255, 0.2);
+    }
+    #reel2.active {
+      border-color: rgba(179, 102, 255, 0.2);
+      box-shadow: 0 0 20px rgba(179, 102, 255, 0.3);
+    }
+    #reel2 .reel-label {
+      color: rgba(0, 212, 255, 0.9);
+      border-bottom-color: rgba(0, 212, 255, 0.3);
+    }
+
+    #reel3 {
+      border-color: rgba(0, 255, 136, 0.2);
+    }
+    #reel3.active {
+      border-color: rgba(0, 255, 136, 0.2);
+      box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+    }
+    #reel3 .reel-label {
+      color: rgba(0, 255, 136, 0.9);
+      border-bottom-color: rgba(0, 255, 136, 0.3);
+    }
+
+    #reel4 {
+      border-color: rgba(255, 153, 51, 0.2);
+    }
+    #reel4.active {
+      border-color: rgba(255, 153, 51, 0.2);
+      box-shadow: 0 0 20px rgba(255, 153, 51, 0.3);
+    }
+    #reel4 .reel-label {
+      color: rgba(255, 153, 51, 0.9);
+      border-bottom-color: rgba(255, 153, 51, 0.3);
+    }
+
+    #reel5 {
+      border-color: rgba(255, 68, 68, 0.2);
+    }
+    #reel5.active {
+      border-color: rgba(255, 68, 68, 0.2);
+      box-shadow: 0 0 20px rgba(255, 68, 68, 0.3);
+    }
+    #reel5 .reel-label {
+      color: rgba(255, 68, 68, 0.9);
+      border-bottom-color: rgba(255, 68, 68, 0.3);
+    }
+
+    .reel-label {
+      font-size: 1.15rem; /* Increased from 1rem */
+      color: #72c9bb;
+      margin-bottom: 0.3rem; /* Reduced margin */
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: bold;
+      border-bottom: 1px solid #4a9d8e;
+      padding-bottom: 0.2rem; /* Reduced padding */
+      flex-shrink: 0;
+      min-height: 1.5rem;
+      display: block;
+      opacity: 1;
+      z-index: 10;
+      position: relative;
+    }
+
+    .reel-slots {
+      display: flex;
+      flex-direction: column;
+      gap: 6px; /* Slightly reduced gap for more slot space */
+      flex: 1;
+      height: 100%;
+    }
+
+    .reel-slot {
+      background: #142e2a;
+      border: 1px solid #2a4d47;
+      border-radius: 8px;
+      padding: 0;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .reel-slot.middle {
+      border: 2px solid #5ebaaa;
+      background: #1a3835;
+      box-shadow: 0 0 10px rgba(94, 186, 170, 0.3);
+    }
+
+    .reel-value {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+    }
+
+    .reel-value img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      background: transparent;
+    }
+
+    .reel-slot.middle .reel-value img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      background: transparent;
+    }
+
+    .bonus-indicator {
+      font-size: 0.7rem;
+      color: #ffd700;
+      margin-top: 2px;
+      display: block;
+    }
+
+    .reel-value.has-bonus {
+      color: #5ebaaa;
+    }
+    
+    /* Dim all non-active slots (top/bottom rows and ACE slots) */
+    .reel-value.dimmed {
+      opacity: 0.3;
+      filter: brightness(0.5);
+    }
+    
+    /* Brighten only the active middle row slots (non-ACE) */
+    .reel-value.highlight-active {
+      filter: brightness(1.3);
+    }
+
+    .reel-slot.spinning .reel-value {
+      animation: slotSpin 0.1s linear infinite;
+    }
+
+    @keyframes slotSpin {
+      0% { 
+        transform: translateY(-100%);
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      90% {
+        opacity: 1;
+      }
+      100% { 
+        transform: translateY(100%);
+        opacity: 0;
+      }
+    }
+
+    .reel-slot.spinning .reel-value {
+      animation: slotSpin 0.15s linear infinite;
+    }
+
+    .reel-value.spinning {
+      animation: slotSpin 0.15s linear infinite;
+    }
+
+    .reel-value.bonus {
+      color: #ffd700;
+      font-size: 1.5rem;
+      animation: glow 1s ease-in-out infinite;
+    }
+
+    .reel-value.ace {
+      color: #ff6b6b;
+      font-size: 1.8rem;
+      animation: aceGlow 1s ease-in-out infinite;
+    }
+
+    @keyframes glow {
+      0%, 100% { text-shadow: 0 0 10px #ffd700; }
+      50% { text-shadow: 0 0 20px #ffd700, 0 0 30px #ffd700; }
+    }
+
+    @keyframes aceGlow {
+      0%, 100% { text-shadow: 0 0 20px #ff6b6b; }
+      50% { text-shadow: 0 0 40px #ff6b6b, 0 0 60px #ff6b6b; }
+    }
+
+    .spin-btn {
+      position: fixed;
+      bottom: 8px;
+      right: 15px;
+      background: linear-gradient(135deg, #5ebaaa 0%, #4a9d8e 100%);
+      border: none;
+      color: white;
+      padding: 8px 24px; /* Reduced padding for smaller button */
+      font-size: 1.1rem; /* Reduced font size */
+      font-weight: bold;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      box-shadow: 0 4px 20px rgba(94, 186, 170, 0.5);
+      z-index: 100;
+    }
+
+    .spin-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 30px rgba(94, 186, 170, 0.7);
+    }
+
+    .spin-btn:active {
+      transform: scale(0.95);
+    }
+
+    .spin-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: scale(1);
+    }
+
+    .result-display {
+      background: transparent;
+      border: none;
+      padding: 0.5rem 0;
+      margin-bottom: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .result-title {
+      font-size: 1rem;
+      color: #72c9bb;
+      margin-bottom: 0.3rem;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .result-text {
+      font-size: 1.1rem;
+      color: white;
+      line-height: 1.4;
+      text-align: center;
+      font-weight: bold;
+      min-height: 1.5rem;
+    }
+
+    .ace-banner {
+      background: linear-gradient(135deg, #ff6b6b 0%, #ee5555 100%);
+      border: 3px solid #ffd700;
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      text-align: center;
+      animation: aceGlow 2s ease-in-out infinite;
+    }
+
+    .ace-title {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #ffd700;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+      margin-bottom: 0.5rem;
+    }
+
+    .ace-text {
+      font-size: 0.9rem;
+      color: white;
+      line-height: 1.4;
+    }
+
+    .ace-text p {
+      margin: 0.3rem 0;
+    }
+
+    @media (max-width: 480px) {
+      .reels-container {
+        gap: 4px;
+      }
+      .reel {
+        padding: 0.4rem 0.2rem;
+        border-radius: 8px;
+      }
+      /* Remove fixed heights - let flex handle it */
+      .reel-value {
+        font-size: 1.2rem;
+      }
+      .reel-slot.middle .reel-value {
+        font-size: 1.4rem;
+      }
+      .reel-label {
+        font-size: 0.7rem;
+        margin-bottom: 0.5rem;
+        padding-bottom: 0.3rem;
+      }
+      .reel-slots {
+        gap: 6px;
+      }
+      .spin-btn {
+        font-size: 1.1rem;
+        padding: 10px 24px;
+      }
+      .back-btn {
+        padding: 10px 20px;
+        font-size: 0.9rem;
+      }
+      .bonus-count {
+        font-size: 0.75rem;
+      }
+      .challenge-popup {
+        padding: 1rem 1.2rem;
+        max-width: 85%;
+      }
+      .challenge-title {
+        font-size: 0.75rem;
+      }
+      .challenge-text {
+        font-size: 0.85rem;
+      }
+    }
+
+    @media (orientation: landscape) and (max-height: 500px) {
+      .slot-machine {
+        padding: 0.2rem 0.5rem; /* Even less padding for short screens */
+      }
+      .reels-container {
+        gap: 5px;
+      }
+      .reel {
+        padding: 0.2rem 0.2rem; /* Reduced padding */
+      }
+      /* Remove fixed heights - let flex handle it */
+      .reel-value {
+        font-size: 1.1rem;
+      }
+      .reel-slot.middle .reel-value {
+        font-size: 1.3rem;
+      }
+      .reel-label {
+        font-size: 0.65rem;
+        margin-bottom: 0.2rem; /* Less margin */
+      }
+      .reel-slots {
+        gap: 4px; /* Smaller gap for more slot space */
+      }
+      .challenge-popup {
+        padding: 0.9rem 1.1rem;
+      }
+      .challenge-title {
+        font-size: 0.8rem;
+      }
+      .challenge-text {
+        font-size: 0.9rem;
+      }
+    }
+
+    @media (orientation: landscape) and (max-height: 400px) {
+      .reel {
+        padding: 0.2rem 0.15rem; /* Minimal padding */
+      }
+      /* Remove fixed heights - let flex handle it */
+      .reel-value {
+        font-size: 0.95rem;
+      }
+      .reel-slot.middle .reel-value {
+        font-size: 1.1rem;
+      }
+      .reel-label {
+        font-size: 0.6rem;
+        margin-bottom: 0.2rem;
+        padding-bottom: 0.1rem;
+      }
+      .reel-slots {
+        gap: 3px; /* Minimal gap for maximum slot space */
+      }
+      .ace-title {
+        font-size: 1.5rem;
+      }
+      .ace-text {
+        font-size: 0.75rem;
+      }
+      .challenge-popup {
+        padding: 0.8rem 1rem;
+      }
+      .challenge-title {
+        font-size: 0.7rem;
+      }
+      .challenge-text {
+        font-size: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="orientation-warning">
+    <div class="orientation-warning-icon">📱→🔄</div>
+    <div class="orientation-warning-text">
+      <strong>Vrid telefonen till liggande läge</strong><br>
+      för att spela Gambler!
+    </div>
+  </div>
+
+  <button class="back-btn" onclick="window.location.href='/'">←</button>
+  <button class="scorecard-btn" onclick="window.location.href='/scorecard.html'">Score</button>
+
+  <div class="game-container">
+    <div id="aceBanner" class="ace-banner" style="display: none;">
+      <div class="ace-title">🏆 ACE! 🏆</div>
+      <div class="ace-text">
+        <p><strong>Du får välja:</strong></p>
+        <p>a) Ditt eget valfria kast</p>
+        <p>b) Motståndarens nästa kast</p>
+      </div>
+    </div>
+
+    <div class="slot-machine">
+      <div class="reels-container">
+        <div class="reel" id="reel1">
+          <div class="reel-label">KAST</div>
+          <div class="reel-slots">
+            <div class="reel-slot top">
+              <div class="reel-value" id="reel1-top"><img src="images/slots/questionmark.jpeg" alt="?"></div>
+            </div>
+            <div class="reel-slot middle">
+              <div class="reel-value" id="reel1-value"><img src="images/slots/questionmark.jpeg" alt="?"></div>
+            </div>
+            <div class="reel-slot bottom">
+              <div class="reel-value" id="reel1-bottom"><img src="images/slots/questionmark.jpeg" alt="?"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="reel" id="reel2">
+          <div class="reel-label">VINKEL</div>
+          <div class="reel-slots">
+            <div class="reel-slot top">
+              <div class="reel-value" id="reel2-top"><img src="images/slots/questionmark.jpeg" alt="?"></div>
+            </div>
+            <div class="reel-slot middle">
+              <div class="reel-value" id="reel2-value"><img src="images/slots/questionmark.jpeg" alt="?"></div>
+            </div>
+            <div class="reel-slot bottom">
+              <div class="reel-value" id="reel2-bottom"><img src="images/slots/questionmark.jpeg" alt="?"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="reel" id="reel3">
+          <div class="reel-label">SPEED</div>
+          <div class="reel-slots">
+            <div class="reel-slot top">
+              <div class="reel-value" id="reel3-top"><img src="images/slots/questionmark.jpeg" alt="?"></div>
+            </div>
+            <div class="reel-slot middle">
+              <div class="reel-value" id="reel3-value"><img src="images/slots/questionmark.jpeg" alt="?"></div>
+            </div>
+            <div class="reel-slot bottom">
+              <div class="reel-value" id="reel3-bottom"><img src="images/slots/questionmark.jpeg" alt="?"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="reel locked" id="reel4">
+          <div class="reel-label">POSITION</div>
+          <div class="reel-slots">
+            <div class="reel-slot top">
+              <div class="reel-value" id="reel4-top"><img src="images/slots/questionmark.jpeg" alt="?"></div>
+            </div>
+            <div class="reel-slot middle">
+              <div class="reel-value" id="reel4-value"><img src="images/slots/questionmark.jpeg" alt="?"></div>
+            </div>
+            <div class="reel-slot bottom">
+              <div class="reel-value" id="reel4-bottom"><img src="images/slots/questionmark.jpeg" alt="?"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="reel locked" id="reel5">
+          <div class="reel-label">MOD</div>
+          <div class="reel-slots">
+            <div class="reel-slot top">
+              <div class="reel-value" id="reel5-top"><img src="images/slots/questionmark.jpeg" alt="?"></div>
+            </div>
+            <div class="reel-slot middle">
+              <div class="reel-value" id="reel5-value"><img src="images/slots/questionmark.jpeg" alt="?"></div>
+            </div>
+            <div class="reel-slot bottom">
+              <div class="reel-value" id="reel5-bottom"><img src="images/slots/questionmark.jpeg" alt="?"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Challenge popup - shown after spin completes -->
+  <div class="challenge-popup" id="challengePopup">
+    <div class="challenge-title">UTMANING</div>
+    <div class="challenge-text" id="challengeText"></div>
+  </div>
+
+  <div class="bonus-count" id="bonusCount">
+    ⭐ Ace kvar till bonus: <span id="bonusNumber">5</span>
+  </div>
+
+  <button class="spin-btn" id="spinBtn" onclick="spin()">SPIN</button>
+
+  <script>
+    // Game state
+    let bonusCount = 0;
+    let activeReels = 3; // Always start with 3 reels
+    let isSpinning = false;
+    let currentResult = null;
+    
+    // Image preloading cache
+    const imageCache = {};
+    
+    // Preload all images
+    function preloadImages() {
+      const imagePaths = [
+        'images/slots/questionmark.jpeg',
+        'images/slots/ace.jpeg',
+        // Kast
+        'images/slots/kast/rhbh.jpeg',
+        'images/slots/kast/rhfh.jpeg',
+        'images/slots/kast/lhbh.jpeg',
+        'images/slots/kast/lhfh.jpeg',
+        // Vinkel
+        'images/slots/vinkel/hyzer.jpeg',
+        'images/slots/vinkel/anhyzer.jpeg',
+        'images/slots/vinkel/flat.jpeg',
+        'images/slots/vinkel/roller.jpeg',
+        // Speed (1-15)
+        ...Array.from({length: 15}, (_, i) => `images/slots/speed/${i + 1}.jpeg`),
+        'images/slots/speed/minimarker.jpeg',
+        // Position
+        'images/slots/position/standstill.jpeg',
+        'images/slots/position/360.jpeg',
+        'images/slots/position/right_leg.jpeg',
+        'images/slots/position/left_leg.jpeg',
+        // Mod
+        'images/slots/mod/blindfold.jpeg',
+        'images/slots/mod/opponent_disc.jpeg',
+        'images/slots/mod/gamble.jpeg'
+      ];
+      
+      imagePaths.forEach(path => {
+        const img = new Image();
+        img.src = path;
+        imageCache[path] = img;
+      });
+    }
+
+    // Reel data - each item can have bonus attached
+    const reelData = {
+      reel1: {
+        items: ['⬅️ Backhand', '➡️ Backhand', '⬅️ Forehand', '➡️ Forehand'],
+        bonusChance: 0.2 // 20% chance of bonus
+      },
+      reel2: {
+        items: ['Hyzer', 'Anhyzer', 'Platt', 'Rollervinkel'],
+        bonusChance: 0.2
+      },
+      reel3: {
+        items: ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟', '1️⃣1️⃣', '1️⃣2️⃣', '1️⃣3️⃣', '1️⃣4️⃣', '1️⃣5️⃣', 'Minimarker'],
+        bonusChance: 0.2
+      },
+      reel4: {
+        items: ['Standstill', '360°', 'Höger ben', 'Vänster ben'],
+        bonusChance: 0.2
+      },
+      reel5: {
+        items: ['Blunda', 'Motståndarens disc', 'Dubbla kast'],
+        bonusChance: 0 // No bonus for Mod category
+      }
+    };
+
+    function getRandomItem(array) {
+      return array[Math.floor(Math.random() * array.length)];
+    }
+
+    // Helper function to render value as text or image
+    function renderValue(value, reelId) {
+      // Handle "Fritt val" (ACE) - use ace.jpeg
+      if (value === 'Fritt val') {
+        return `<img src="images/slots/ace.jpeg" alt="ACE - Fritt val" loading="lazy">`;
+      }
+      
+      // For reel1 (Kast), use images
+      if (reelId === 'reel1') {
+        const kastMap = {
+          '➡️ Backhand': 'rhbh',
+          '➡️ Forehand': 'rhfh',
+          '⬅️ Backhand': 'lhbh',
+          '⬅️ Forehand': 'lhfh'
+        };
+        
+        if (kastMap[value]) {
+          return `<img src="images/slots/kast/${kastMap[value]}.jpeg" alt="${value}" loading="lazy">`;
+        }
+      }
+      
+      // For reel2 (Vinkel), use images
+      if (reelId === 'reel2') {
+        const vinkelMap = {
+          'Hyzer': 'hyzer',
+          'Anhyzer': 'anhyzer',
+          'Platt': 'flat',
+          'Rollervinkel': 'roller'
+        };
+        
+        if (vinkelMap[value]) {
+          return `<img src="images/slots/vinkel/${vinkelMap[value]}.jpeg" alt="${value}" loading="lazy">`;
+        }
+      }
+      
+      // For reel3 (Speed), use images instead of emoji numbers
+      if (reelId === 'reel3') {
+        // Handle Minimarker specially
+        if (value === 'Minimarker') {
+          return `<img src="images/slots/speed/minimarker.jpeg" alt="Minimarker" loading="lazy">`;
+        }
+        
+        // Map each speed emoji to individual image
+        const speedMap = {
+          '1️⃣': '1',
+          '2️⃣': '2',
+          '3️⃣': '3',
+          '4️⃣': '4',
+          '5️⃣': '5',
+          '6️⃣': '6',
+          '7️⃣': '7',
+          '8️⃣': '8',
+          '9️⃣': '9',
+          '🔟': '10',
+          '1️⃣1️⃣': '11',
+          '1️⃣2️⃣': '12',
+          '1️⃣3️⃣': '13',
+          '1️⃣4️⃣': '14',
+          '1️⃣5️⃣': '15'
+        };
+        
+        if (speedMap[value]) {
+          return `<img src="images/slots/speed/${speedMap[value]}.jpeg" alt="Speed ${speedMap[value]}" loading="lazy">`;
+        }
+      }
+      
+      // For reel4 (Position), use images
+      if (reelId === 'reel4') {
+        const positionMap = {
+          'Standstill': 'standstill',
+          '360°': '360',
+          'Höger ben': 'right_leg',
+          'Vänster ben': 'left_leg'
+        };
+        
+        if (positionMap[value]) {
+          return `<img src="images/slots/position/${positionMap[value]}.jpeg" alt="${value}" loading="lazy">`;
+        }
+      }
+      
+      // For reel5 (Mod), use images
+      if (reelId === 'reel5') {
+        const modMap = {
+          'Blunda': 'blindfold',
+          'Motståndarens disc': 'opponent_disc',
+          'Dubbla kast': 'gamble'
+        };
+        
+        if (modMap[value]) {
+          return `<img src="images/slots/mod/${modMap[value]}.jpeg" alt="${value}" loading="lazy">`;
+        }
+      }
+      
+      // Default: return text
+      return value;
+    }
+
+    function spinReel(reelId) {
+      const reelConfig = reelData[reelId];
+      const hasBonus = Math.random() < reelConfig.bonusChance;
+      
+      let baseValue;
+      // If bonus hits on reel1-4, set to "Fritt val"
+      if (hasBonus && (reelId === 'reel1' || reelId === 'reel2' || reelId === 'reel3' || reelId === 'reel4')) {
+        baseValue = 'Fritt val';
+      } else {
+        baseValue = getRandomItem(reelConfig.items);
+      }
+      
+      return {
+        value: baseValue,
+        bonus: hasBonus
+      };
+    }
+
+    function animateReel(reelId, duration, finalResult) {
+      const reelMiddle = document.getElementById(`${reelId}-value`);
+      const reelTop = document.getElementById(`${reelId}-top`);
+      const reelBottom = document.getElementById(`${reelId}-bottom`);
+      const reel = document.getElementById(reelId);
+      const reelConfig = reelData[reelId];
+      
+      // Add active class to show which reel is spinning
+      reel.classList.add('active');
+      
+      // Get all slots for this reel
+      const slots = [
+        document.querySelector(`#${reelId} .reel-slot.top`),
+        document.querySelector(`#${reelId} .reel-slot.middle`),
+        document.querySelector(`#${reelId} .reel-slot.bottom`)
+      ];
+      
+      slots.forEach(slot => slot.classList.add('spinning'));
+      
+      const interval = setInterval(() => {
+        // Randomize all 3 slots during spin
+        // Include "Fritt val" (ACE) as possible value during animation
+        const possibleValues = [...reelConfig.items];
+        if (reelConfig.bonusChance > 0) {
+          possibleValues.push('Fritt val');
+        }
+        
+        const random1 = getRandomItem(possibleValues);
+        const random2 = getRandomItem(possibleValues);
+        const random3 = getRandomItem(possibleValues);
+        
+        reelTop.innerHTML = renderValue(random1, reelId);
+        reelMiddle.innerHTML = renderValue(random2, reelId);
+        reelBottom.innerHTML = renderValue(random3, reelId);
+      }, 80); // Reduced from 100ms to 80ms for smoother animation
+
+      return new Promise(resolve => {
+        setTimeout(() => {
+          clearInterval(interval);
+          slots.forEach(slot => slot.classList.remove('spinning'));
+          reel.classList.remove('active');
+          
+          // Play ACE sound IMMEDIATELY if bonus (before any rendering)
+          if (finalResult.bonus) {
+            const aceSound = new Audio('sounds/effects/ace.mp3');
+            aceSound.volume = 0.5;
+            aceSound.play().catch(e => console.log('Sound play failed:', e));
+          }
+          
+          // Set final values - middle is the result, top and bottom are random neighbors
+          // Allow ACE to appear on top/bottom for "near miss" effect (punkt 1)
+          const possibleNeighbors = [...reelConfig.items];
+          if (reelConfig.bonusChance > 0) {
+            possibleNeighbors.push('Fritt val'); // ACE can appear as neighbor
+          }
+          
+          // Avoid having same value 3 times in same column (punkt 2)
+          let topValue, bottomValue;
+          let attempts = 0;
+          do {
+            topValue = getRandomItem(possibleNeighbors);
+            bottomValue = getRandomItem(possibleNeighbors);
+            attempts++;
+          } while (
+            attempts < 10 && 
+            topValue === finalResult.value && 
+            bottomValue === finalResult.value
+          );
+          
+          reelTop.innerHTML = renderValue(topValue, reelId);
+          reelBottom.innerHTML = renderValue(bottomValue, reelId);
+          
+          // Display middle value with bonus indicator if applicable
+          if (finalResult.bonus) {
+            reelMiddle.innerHTML = `${renderValue(finalResult.value, reelId)}<br><small class="bonus-indicator">⭐</small>`;
+            reelMiddle.classList.add('has-bonus');
+            
+            // Add bonus flash animation to the reel
+            reel.classList.add('bonus-flash');
+            setTimeout(() => {
+              reel.classList.remove('bonus-flash');
+            }, 800);
+          } else {
+            reelMiddle.innerHTML = renderValue(finalResult.value, reelId);
+            reelMiddle.classList.remove('has-bonus');
+          }
+          
+          resolve();
+        }, duration);
+      });
+    }
+
+    async function spin() {
+      if (isSpinning) return;
+      
+      isSpinning = true;
+      document.getElementById('spinBtn').disabled = true;
+      document.getElementById('aceBanner').style.display = 'none';
+
+      // Hide challenge popup when starting new spin
+      document.getElementById('challengePopup').classList.remove('show');
+
+      // Reset to 3 reels at start of each spin
+      activeReels = 3;
+      
+      // Reset ALL reels to questionmark at start of new spin
+      // Also remove highlight and dimming classes
+      for (let i = 1; i <= 5; i++) {
+        const reelValue = document.getElementById(`reel${i}-value`);
+        reelValue.innerHTML = '<img src="images/slots/questionmark.jpeg" alt="?">';
+        reelValue.classList.remove('highlight-active', 'dimmed', 'has-bonus');
+        
+        const reelTop = document.getElementById(`reel${i}-top`);
+        const reelBottom = document.getElementById(`reel${i}-bottom`);
+        reelTop.innerHTML = '<img src="images/slots/questionmark.jpeg" alt="?">';
+        reelTop.classList.remove('dimmed');
+        reelBottom.innerHTML = '<img src="images/slots/questionmark.jpeg" alt="?">';
+        reelBottom.classList.remove('dimmed');
+      }
+      
+      // Lock reels 4 and 5
+      document.getElementById('reel4').classList.add('locked');
+      document.getElementById('reel5').classList.add('locked');
+
+      // Spin reels SEQUENTIALLY (one after another)
+      const results = [];
+      let bonusesThisSpin = 0;
+      
+      for (let i = 1; i <= activeReels; i++) {
+        const reelId = `reel${i}`;
+        const duration = 1500; // Each reel spins for 1.5 seconds
+        const result = spinReel(reelId);
+        
+        // Wait for this reel to finish before starting next one
+        await animateReel(reelId, duration, result);
+        
+        results.push(result);
+        
+        // Check if this had a bonus
+        if (result.bonus) {
+          bonusesThisSpin++;
+          bonusCount++;
+          updateBonusDisplay();
+          
+          // Unlock next reel immediately if we got bonus and next reel exists
+          if (i <= 3 && activeReels < 5) {
+            // If bonus on reel 1, 2, or 3, unlock next reel
+            activeReels++;
+            unlockReel(activeReels);
+          } else if (i === 4 && activeReels === 4) {
+            // If bonus on reel 4, unlock reel 5
+            activeReels = 5;
+            unlockReel(5);
+          }
+        }
+      }
+
+      // Check for PERFECT ACE (all 5 reels have bonus on same spin)
+      if (activeReels === 5 && bonusesThisSpin === 5) {
+        showAce();
+        bonusCount = 0; // Reset after ACE
+        updateBonusDisplay();
+      }
+      // Check for 5 BONUS total (player who triggers gets to choose)
+      else if (bonusCount >= 5) {
+        showTenBonus();
+        bonusCount = 0; // Reset after 5 bonus
+        updateBonusDisplay();
+      } else {
+        // Display result
+        displayResult(results);
+      }
+
+      // Apply dimming/highlighting AFTER result is displayed
+      // Dim ALL slots (top, middle, bottom) except active middle slots
+      for (let i = 1; i <= activeReels; i++) {
+        const reelTop = document.getElementById(`reel${i}-top`);
+        const reelMiddle = document.getElementById(`reel${i}-value`);
+        const reelBottom = document.getElementById(`reel${i}-bottom`);
+        
+        // Always dim top and bottom rows
+        reelTop.classList.add('dimmed');
+        reelBottom.classList.add('dimmed');
+        
+        // For middle row: dim if ACE, brighten if active
+        if (reelMiddle.classList.contains('has-bonus')) {
+          // This is an ACE - dim it
+          reelMiddle.classList.add('dimmed');
+        } else {
+          // This is an active card - brighten it
+          reelMiddle.classList.add('highlight-active');
+        }
+      }
+
+      isSpinning = false;
+      document.getElementById('spinBtn').disabled = false;
+    }
+
+    function updateBonusDisplay() {
+      const acesLeft = Math.max(0, 5 - bonusCount); // Never show negative numbers
+      document.getElementById('bonusNumber').textContent = acesLeft;
+    }
+
+    function unlockReel(reelNum) {
+      const reel = document.getElementById(`reel${reelNum}`);
+      reel.classList.remove('locked');
+      reel.classList.add('unlocked');
+      
+      const reelTop = document.getElementById(`reel${reelNum}-top`);
+      const reelMiddle = document.getElementById(`reel${reelNum}-value`);
+      const reelBottom = document.getElementById(`reel${reelNum}-bottom`);
+      
+      reelTop.innerHTML = '<img src="images/slots/questionmark.jpeg" alt="?">';
+      reelMiddle.innerHTML = '<img src="images/slots/questionmark.jpeg" alt="?">';
+      reelBottom.innerHTML = '<img src="images/slots/questionmark.jpeg" alt="?">';
+      
+      // Remove the unlocked class after animation completes (1 second)
+      setTimeout(() => {
+        reel.classList.remove('unlocked');
+      }, 1000);
+    }
+
+    function displayResult(results) {
+      const challengeText = document.getElementById('challengeText');
+      const challengePopup = document.getElementById('challengePopup');
+      
+      // Build the throw description from all values
+      const throwParts = results.map((r, index) => {
+        // Skip ACE categories entirely - don't display them
+        if (r.value === 'Fritt val') {
+          return null; // Return null to filter out later
+        }
+        
+        // For reel1 (index 0 - Kast), convert to Swedish text without emojis
+        if (index === 0) {
+          const kastMap = {
+            '⬅️ Backhand': 'Vänster backhand',
+            '⬅️ Forehand': 'Vänster forehand',
+            '➡️ Backhand': 'Höger backhand',
+            '➡️ Forehand': 'Höger forehand'
+          };
+          return kastMap[r.value] || r.value;
+        }
+        
+        // For reel3 (index 2), add "Speed: " prefix and convert emoji to number
+        if (index === 2) {
+          // Extract number from emoji (e.g., "1️⃣" -> "1", "1️⃣5️⃣" -> "15")
+          const speedNum = r.value.replace(/️⃣/g, '').replace(/🔟/g, '10');
+          return `Speed: ${speedNum}`;
+        }
+        return r.value;
+      }).filter(part => part !== null); // Remove null entries (ACEs)
+      
+      // Display in popup
+      challengeText.textContent = throwParts.join(' • ');
+      challengePopup.classList.add('show');
+    }
+
+    function showTenBonus() {
+      const challengePopup = document.getElementById('challengePopup');
+      const challengeTitle = challengePopup.querySelector('.challenge-title');
+      const challengeText = challengePopup.querySelector('.challenge-text');
+      
+      // Add gold theme classes
+      challengePopup.classList.add('gold');
+      challengeTitle.classList.add('gold');
+      challengeText.classList.add('gold');
+      
+      // Update content
+      challengeTitle.textContent = 'ACE BONUS';
+      challengeText.textContent = 'Eftersom du gjorde ace nummer fem, så får du välja ett helt valfritt kast!';
+      
+      // Show the popup
+      challengePopup.classList.add('show');
+      
+      // Reset the game to 3 reels
+      resetGame();
+      
+      // Reset to normal theme after popup is hidden
+      setTimeout(() => {
+        challengePopup.classList.remove('gold');
+        challengeTitle.classList.remove('gold');
+        challengeText.classList.remove('gold');
+      }, 100);
+    }
+
+    function showAce() {
+      const aceBanner = document.getElementById('aceBanner');
+      const aceTitle = aceBanner.querySelector('.ace-title');
+      const aceText = aceBanner.querySelector('.ace-text');
+      
+      aceTitle.textContent = '🏆 ACE! 🏆';
+      aceText.innerHTML = `
+        <p><strong>Alla 5 stjärnor på samma snurr!</strong></p>
+        <p>Du får välja:</p>
+        <p>a) Ditt eget valfria kast</p>
+        <p>b) Motståndarens nästa kast</p>
+      `;
+      
+      aceBanner.style.display = 'block';
+      
+      // Reset the game to 3 reels
+      resetGame();
+    }
+
+    function resetGame() {
+      activeReels = 3;
+      
+      // Lock reels 4 and 5 again
+      document.getElementById('reel4').classList.add('locked');
+      document.getElementById('reel4-top').innerHTML = '<img src="images/slots/questionmark.jpeg" alt="?">';
+      document.getElementById('reel4-value').innerHTML = '<img src="images/slots/questionmark.jpeg" alt="?">';
+      document.getElementById('reel4-bottom').innerHTML = '<img src="images/slots/questionmark.jpeg" alt="?">';
+      
+      document.getElementById('reel5').classList.add('locked');
+      document.getElementById('reel5-top').innerHTML = '<img src="images/slots/questionmark.jpeg" alt="?">';
+      document.getElementById('reel5-value').innerHTML = '<img src="images/slots/questionmark.jpeg" alt="?">';
+      document.getElementById('reel5-bottom').innerHTML = '<img src="images/slots/questionmark.jpeg" alt="?">';
+      
+      // Reset all active reel values to ?
+      for (let i = 1; i <= 3; i++) {
+        document.getElementById(`reel${i}-top`).innerHTML = '<img src="images/slots/questionmark.jpeg" alt="?">';
+        document.getElementById(`reel${i}-value`).innerHTML = '<img src="images/slots/questionmark.jpeg" alt="?">';
+        document.getElementById(`reel${i}-value`).classList.remove('has-bonus');
+        document.getElementById(`reel${i}-bottom`).innerHTML = '<img src="images/slots/questionmark.jpeg" alt="?">';
+      }
+    }
+
+    // Initialize on load
+    window.addEventListener('load', () => {
+      // Preload all images for smooth animation
+      preloadImages();
+      
+      // Make sure we start with 3 reels only
+      activeReels = 3;
+      
+      // Ensure reels 4 and 5 are locked
+      document.getElementById('reel4').classList.add('locked');
+      document.getElementById('reel5').classList.add('locked');
+      
+      // LOG EXACT DIMENSIONS for image sizing
+      setTimeout(() => {
+        const slot = document.querySelector('.reel-slot.middle');
+        if (slot) {
+          const rect = slot.getBoundingClientRect();
+          const width = Math.round(rect.width);
+          const height = Math.round(rect.height);
+          const ratio = (width / height).toFixed(2);
+          
+          // Console log only
+          console.log('═══════════════════════════════════════');
+          console.log('📐 SLOT DIMENSIONS FOR IMAGE CREATION:');
+          console.log('═══════════════════════════════════════');
+          console.log(`Width: ${width}px`);
+          console.log(`Height: ${height}px`);
+          console.log(`Aspect Ratio: ${ratio} (${width}:${height})`);
+          console.log('───────────────────────────────────────');
+          console.log('🎨 RECOMMENDED IMAGE SIZES:');
+          console.log(`Standard: ${width}px × ${height}px`);
+          console.log(`High-res (2x): ${width * 2}px × ${height * 2}px`);
+          console.log(`High-res (3x): ${width * 3}px × ${height * 3}px`);
+          console.log('═══════════════════════════════════════');
+          console.log(`Device: ${navigator.userAgent}`);
+          console.log(`Screen: ${window.innerWidth}×${window.innerHeight}`);
+          console.log('═══════════════════════════════════════');
+        }
+      }, 1000);
+    });
+  </script>
+</body>
+</html>
